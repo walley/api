@@ -27,11 +27,12 @@ sub process_node {
     for my $child ($node->childNodes) {
       $n = $child->getName;
       $v = $child->textContent;
-      $v =~ s/[ \n\t]//g;
+      $v =~ s/[\n\t]//g;
+      $v =~ s/^\s+|\s+$//g;
       $h{$n} = $v;
     }
 
-    my ($lat,$lon) = split(/,/, $h{Point});
+    my ($lon,$lat) = split(/,/, $h{Point});
 
     $query = "insert into commons (id, lat, lon, name, desc) values (null, '$lat', '$lon', '$h{name}', '$h{description}');";
 
