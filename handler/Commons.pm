@@ -46,6 +46,11 @@ use DBI;
 use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
 
+use Geo::JSON;
+use Geo::JSON::Point;
+use Geo::JSON::Feature;
+use Geo::JSON::FeatureCollection;
+
 use Sys::Syslog;                        # all except setlogsock()
 use HTML::Entities;
 
@@ -63,7 +68,13 @@ sub handler
     &parse_bbox($get_args{bbox});
   }
 
-   return Apache2::Const::OK;
+  $r->content_type('text/plain; charset=utf-8');
+  $r->no_cache(1);
+  $out = &output_geojson();
+  $r->print($out);
+
+  closelog();
+  return Apache2::Const::OK;
 }
 
 ################################################################################
@@ -112,8 +123,10 @@ sub output_geojson
 
   my $query = "select * from commons";
   if ($BBOX) {
-    $query .= " lat < $maxlat and lat > $minlat and lon < $maxlon and lon > $minlon";
+    $query .= " where lat < $maxlat and lat > $minlat and lon < $maxlon and lon > $minlon";
   }
+
+  syslog('info', "commons query " . $query);
 
   my $pt;
   my $ft;
@@ -129,14 +142,14 @@ sub output_geojson
       }
   );
 
-  my $sql = qq{SET NAMES 'utf8';};
-  $dbh->do($sql);
+#  my $sql = qq{SET NAMES 'utf8';};
+#  $dbh->do($sql);
 
   $res = $dbh->selectall_arrayref($query);
   print $DBI::errstr;
 
   foreach my $row (@$res) {
-    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
+    my ($id, $lat, $lon, $name, $desc) = @$row;
 
     my $fixed_lat = looks_like_number($lat) ? $lat : 0;
     my $fixed_lon = looks_like_number($lon) ? $lon : 0;
@@ -148,11 +161,8 @@ sub output_geojson
 
     my %properties = (
       'id' => $id,
-      'url' => $url,
-      'attribution' => $attribution,
       'name' => $name,
-      'ref' => $ref,
-      'note' => $note,
+      'desc' => $desc,
     );
 
     $ft = Geo::JSON::Feature->new({
@@ -169,7 +179,7 @@ sub output_geojson
   });
 
 
-  print $fcol->to_json."\n";
+  return $fcol->to_json."\n";
 }
 
 1;

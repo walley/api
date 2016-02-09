@@ -1,3 +1,22 @@
+#
+#   mod_perl handler, gudeposts, part of openstreetmap.cz
+#   Copyright (C) 2015, 2016 Michal Grezl
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software Foundation,
+#   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+#
+
 package Guidepost::Table;
 
 use utf8;
@@ -20,7 +39,7 @@ use Apache2::Connection ();
 use Apache2::RequestRec ();
 
 use APR::Const -compile => qw(URI_UNP_REVEALPASSWORD);
-use Apache2::Const -compile => qw(OK);
+use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
 
 use DBI;
 
@@ -51,7 +70,7 @@ my $minlon;
 my $minlat;
 my $maxlon;
 my $maxlat;
-
+my $error_result;
 
 ################################################################################
 sub handler
@@ -101,12 +120,10 @@ sub handler
     $text =~ s/[^A-Za-z0-9ěščřžýáíéĚŠČŘŽÝÁÍÉůúŮÚ.]//g;
   }
 
+  $error_result = Apache2::Const::OK;
+
   if ($uri =~ "table\/all") {
-    my $query = "select * from guidepost";
-    if ($BBOX) {
-      $query .= " where ".&add_bbox();
-    }
-    &output_data($query);
+    &output_all();
   } elsif ($uri =~ /goodbye/) {
     &say_goodbye($r);
   } elsif ($uri =~ "/table/count") {
@@ -148,12 +165,37 @@ sub handler
 
 #Dumper(\%ENV);
 #    connection_info($r->connection);
-
-#    $r->status = 200;       # All's ok, so set a "200 OK" status
 #    $r->send_http_header;   # Now send the http headers.
 
-   $dbh->disconnect;
-   return Apache2::Const::OK;
+
+  $dbh->disconnect;
+
+  syslog('info', 'handler result:' . $error_result);
+
+  if ($error_result) {
+    if ($error_result == 404) {error_404();}
+    $r->status($error_result);
+  }
+
+  closelog();
+  return Apache2::Const::OK;
+}
+
+################################################################################
+sub error_404()
+################################################################################
+{
+  $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>We don\'t know nothing about this</p>
+<hr>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+
+</body></html>
+');
 }
 
 ################################################################################
@@ -375,6 +417,14 @@ sub show_by_id
 }
 
 ################################################################################
+sub show_by_name
+################################################################################
+{
+  my $name = shift;
+  &show_by($name, "attribution");
+}
+
+################################################################################
 sub show_by
 ################################################################################
 {
@@ -388,38 +438,37 @@ sub show_by
     $query .= " and ".&add_bbox();
   }
 
-  &output_data($query);
+  $error_result = &output_data($query);
 }
 
-################################################################################
-sub show_by_name
-################################################################################
-{
-  my $name = shift;
-
-  my $query = "select * from guidepost where attribution='$name'";
-
-  if ($BBOX) {
-    $query .= " and ".&add_bbox();
-  }
-  &output_data($query);
-}
 
 ################################################################################
 sub output_data
 ################################################################################
 {
   my ($query) = @_;
+  my $ret;
 
   syslog("info", "output_data query:" . $query);
 
   if ($OUTPUT_FORMAT eq "html") {
-    output_html($query);
+    $ret = output_html($query);
   } elsif ($OUTPUT_FORMAT eq "geojson") {
-    output_geojson($query);
+    $ret = output_geojson($query);
   } elsif ($OUTPUT_FORMAT eq "kml") {
-    output_kml($query);
+    $ret = output_kml($query);
   }
+
+  syslog("info", "output_data result:" . $ret);
+
+  return $ret;
+}
+
+################################################################################
+sub output_kml
+################################################################################
+{
+  return Apache2::Const::SERVER_ERROR;
 }
 
 ################################################################################
@@ -428,7 +477,7 @@ sub output_html
 {
   my ($query) = @_;
 
-  &page_header((
+  my $out = &page_header((
     "http://code.jquery.com/jquery-1.11.3.min.js", 
     "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
     "http://api.openstreetmap.cz/wheelzoom.js"
@@ -442,6 +491,12 @@ sub output_html
     return;
   }
 
+  my $num_elements = @$res;
+
+  if (!$num_elements) {
+    return Apache2::Const::NOT_FOUND;
+  }
+
   foreach my $row (@$res) {
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
     $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note);
@@ -453,7 +508,8 @@ sub output_html
   $out .= &page_footer();
 
   $r->print($out);
-#  print $out;
+
+  return Apache2::Const::OK;
 }
 
 ################################################################################
@@ -469,7 +525,17 @@ sub output_geojson
   my @feature_objects;
 
   $res = $dbh->selectall_arrayref($query);
-  print $DBI::errstr;
+
+  if (!$res) {
+    print $DBI::errstr;
+    return Apache2::Const::SERVER_ERROR;
+  }
+
+  my $num_elements = @$res;
+
+  if (!$num_elements) {
+    return Apache2::Const::NOT_FOUND;
+  }
 
   foreach my $row (@$res) {
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
@@ -504,8 +570,9 @@ sub output_geojson
      features => \@feature_objects,
   });
 
-
   print $fcol->to_json."\n";
+
+  return Apache2::Const::OK;
 }
 
 
@@ -550,7 +617,7 @@ sub leaderboard
 ################################################################################
 {
 
-  &page_header();
+  print &page_header();
   print "<h1>Leaderboard</h1>";
 
   my $query = "select attribution, count (*) as num from guidepost group by attribution order by num desc";
@@ -912,25 +979,29 @@ sub get_gp_count
 sub page_header()
 ################################################################################
 {
-@scripts = @_;
-print '
+  @scripts = @_;
+  my $out = '
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" type="text/css" href="http://api.openstreetmap.cz/editor.css"/>
+  <meta http-equiv="cache-control" content="no-cache">
+  <meta http-equiv="pragma" content="no-cache">
+  <link rel="stylesheet" type="text/css" href="http://api.openstreetmap.cz/editor.css">
   <title>openstreetmap.cz guidepost editor</title>
 ';
 
   foreach $i (@scripts) {
-    print "  <script type='text/javascript' src='";
-    print $i;
-    print "'></script>\n";
+    $out .= "  <script type='text/javascript' src='";
+    $out .= $i;
+    $out .= "'></script>\n";
   }
 
-print '</head>
+  $out .= '</head>
 <body>
 ';
+
+  return $out;
 }
 
 ################################################################################
@@ -1051,7 +1122,7 @@ sub review_form
   print $DBI::errstr;
 #http://code.jquery.com/jquery-1.11.3.min.js
 #http://code.jquery.com/jquery-2.1.4.min.js
-  &page_header(("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js"));
+  print &page_header(("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js"));
 
   print "<script>";
   print "
