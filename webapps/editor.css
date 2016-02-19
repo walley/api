@@ -85,3 +85,7 @@ div.gp_line:hover {
 .cell_middle {
     vertical-align: middle;
 }
+
+.Row.colspan {
+    display: block;
+}

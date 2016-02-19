@@ -76,6 +76,9 @@ my $error_result;
 sub handler
 ################################################################################
 {
+  $BBOX = 0;
+  $LIMIT = 0;
+
   $r = shift;
   openlog('guidepostapi', 'cons,pid', 'user');
 
@@ -122,6 +125,10 @@ sub handler
 
   $error_result = Apache2::Const::OK;
 
+  my $api_request = $uri_components[2];
+  syslog('info', "request $api_request");
+
+
   if ($uri =~ "table\/all") {
     &output_all();
   } elsif ($uri =~ /goodbye/) {
@@ -133,7 +140,8 @@ sub handler
   } elsif ($uri =~ "/table/leaderboard") {
     &leaderboard();
   } elsif ($uri =~ "/table/ref") {
-    &show_by_ref($uri_components[3]);
+    my $joined_ref = substr(join('/', @uri_components[3 .. scalar @uri_components]), 0, -1);
+    &show_by_ref($joined_ref);
   } elsif ($uri =~ "/table/id") {
     &show_by_id($uri_components[3]);
   } elsif ($uri =~ "/table/name") {
@@ -477,11 +485,20 @@ sub output_html
 {
   my ($query) = @_;
 
-  my $out = &page_header((
-    "http://code.jquery.com/jquery-1.11.3.min.js", 
-    "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
-    "http://api.openstreetmap.cz/wheelzoom.js"
-    ));
+#<link rel="stylesheet" href="https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css">
+    @s = (
+      "http://code.jquery.com/jquery-1.11.3.min.js", 
+      "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
+      "http://api.openstreetmap.cz/wheelzoom.js",
+      "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
+      "https://goodies.pixabay.com/jquery/tag-editor/jquery.caret.min.js",
+      "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.js",
+    );
+    @l = (
+      "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css"
+    );
+
+  my $out = &page_header(\@s,\@l);
 
   $res = $dbh->selectall_arrayref($query);
   if (!$res) {
@@ -570,7 +587,8 @@ sub output_geojson
      features => \@feature_objects,
   });
 
-  print $fcol->to_json."\n";
+  #print $fcol->to_json."\n";
+  $r->print($fcol->to_json."\n");
 
   return Apache2::Const::OK;
 }
@@ -582,23 +600,29 @@ sub table_get
 {
   my ($pf, $pt) = @_;
 
+  my $out = "";
+
   my $from_gp = looks_like_number($pf) ? $pf : 0;
   my $to_gp = looks_like_number($pt) ? $pt : 0;
-  print "<h1>from ($pf $pt) ($from_gp) ($to_gp)</h1><hr>";
+  $out .= "<h1>from ($pf $pt) ($from_gp) ($to_gp)</h1><hr>";
 
   my $query = "select * from guidepost LIMIT " . ($to_gp - $from_gp) . " OFFSET $from_gp";
   $res = $dbh->selectall_arrayref($query);
-  print $DBI::errstr;
+  if (!$res) {
+    syslog("info", "output_html dberror" . $DBI::errstr);
+    $out = "DB error";
+  }
 
   foreach my $row (@$res) {
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
-    print &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note);
-    print "</p>\n";
+    $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note);
+    $out .=  "</p>\n";
   }
 
-  print &init_inplace_edit();
-  print "<script>wheelzoom(document.querySelectorAll('img'));</script>";
+  $out .=  &init_inplace_edit();
+  $out .=  "<script>wheelzoom(document.querySelectorAll('img'));</script>";
 
+  $r->print($out);
 }
 
 ################################################################################
@@ -955,8 +979,12 @@ sub gp_line()
   $out .= "</div>\n";
 
   $out .= "</div> <!-- row -->\n";
-
   $out .= "</div> <!-- table -->\n";
+
+  $out .= "<textarea id='ta" . $id . "'>here be tags</textarea>\n";
+  $out .= "<script>\n";
+  $out .= "\$('#ta" . $id . "').tagEditor({ autocomplete: { 'source': '/url/', minLength: 3 } });\n";
+  $out .= "</script>\n";
 
   $out .= "</div> <!-- gp_line -->\n";
 #  syslog('info', $out);
@@ -979,7 +1007,7 @@ sub get_gp_count
 sub page_header()
 ################################################################################
 {
-  @scripts = @_;
+  my ($scripts, $links) = @_;
   my $out = '
 <!doctype html>
 <html lang="en">
@@ -991,7 +1019,13 @@ sub page_header()
   <title>openstreetmap.cz guidepost editor</title>
 ';
 
-  foreach $i (@scripts) {
+  foreach $i (@$links) {
+    $out .= "  <link rel='stylesheet' type='text/css' href='";
+    $out .= $i;
+    $out .= "'>\n";
+  }
+
+  foreach $i (@$scripts) {
     $out .= "  <script type='text/javascript' src='";
     $out .= $i;
     $out .= "'></script>\n";
@@ -1122,7 +1156,8 @@ sub review_form
   print $DBI::errstr;
 #http://code.jquery.com/jquery-1.11.3.min.js
 #http://code.jquery.com/jquery-2.1.4.min.js
-  print &page_header(("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js"));
+  my @a = ("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js");
+  print &page_header(\@a);
 
   print "<script>";
   print "
@@ -1180,30 +1215,36 @@ function reject(id,divid)
 sub is_edited
 ################################################################################
 {
+  $out = "";
+
   my ($what, $id) = @_;
   my $query = "select count() from changes where gp_id=$id and col='$what'";
-  @out = $dbh->selectrow_array($query);
+  @ret = $dbh->selectrow_array($query);
   print $DBI::errstr;
-  if ($out[0] > 0) {
-    print " edited " . $out[0] . "x";
+  if ($ret[0] > 0) {
+    $out = " edited " . $ret[0] . "x";
   } else {
-    print "";
+    $out = "";
   }
+  $r->print($out);
 }
 
 ################################################################################
 sub is_deleted
 ################################################################################
 {
+  my $out - "";
+
   my ($id) = @_;
   my $query = "select count() from changes where gp_id=$id and action='remove'";
-  @out = $dbh->selectrow_array($query);
+  my @ret = $dbh->selectrow_array($query);
   print $DBI::errstr;
-  if ($out[0] > 0) {
-    print &t("marked for delete") . " " . $out[0] . " " . &t("times");
+  if ($ret[0] > 0) {
+    $out = &t("marked for delete") . " " . $ret[0] . " " . &t("times");
   } else {
-    print "";
+    $out = "";
   }
+  $r->print($out);
 }
 
 ################################################################################
