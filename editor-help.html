@@ -7,9 +7,13 @@
   </head>
   <body>
     <h1>Changelog</h1>
-    151221: pridana polozka note - Poznamka
-    151228: oznaceni pro smazani
-    151229: mazani funguje, mazani je v podstate akce ktera se nebude delat, mazat se budou pouze fotky duplicitni a nesouvisejici z turistikou.
+    <ul>
+    <li>151221: pridana polozka note - Poznamka
+    <li>151228: oznaceni pro smazani
+    <li>151229: mazani funguje, mazani je v podstate akce ktera se nebude delat, mazat se budou pouze fotky duplicitni a nesouvisejici z turistikou.
+    <li>160302: tagy, api call na ziskani
+    <li>160307: tagy, pridavani, autocomplete
+    </ul>
     <hr>
     <h1>public api</h1>
     <ul>
@@ -26,15 +30,19 @@
       <li>name/hodnota <p>Zobrazí včechny položky db se jmenem autora rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/name/bublifuk?output=html'>example</a></p></li>
       <li>note/hodnota <p>Zobrazí včechny položky db s poznamka rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/note/100?output=html'>example</a></p></li>
 
-     <li>isedited/col/id vrati pocet editaci atributu col pro id
-     <li>isdeleted/id vrati zda id je oznaceno pro smazani
-     <li>close?lat=49.709297&lon=17.07934&distance=1000 (forces geojson output)
+     <li>isedited/col/id <p>vrati pocet editaci atributu col pro id</p>
+     <li>isdeleted/id <p>vrati zda id je oznaceno pro smazani</p>
+     <li>close <p>vrati polozky ve vzdalenosti distance od lat,lon 
+       <br>typ volani GET
+       <br>parametry lat,lon,distance, vzdy nastavi geojson output <a href='http://api.openstreetmap.cz/table/close?lat=49.709297&lon=17.07934&distance=1000'>example</a> </p>
+     <li>tags/id <p>vrati tagy pro fotku id <a href='http://api.openstreetmap.cz/table/tags/10'>example</a></p>
+     <li>tags/add/id/value <p>prida tag</p>
     </ul>
     <br>
 
-    <h2>parametry</h2>
+    <h2>parametry pro definici a filtrovany vystupu</h2>
+      <> format: url?parametr=hodnota&amp;parametr2=hodnota2 </li>
     <ol>
-      <li> format: url?parametr=hodnota&amp;parametr2=hodnota2 </li>
       <li>bbox
         vymezuje oblast pro dotaz
         =-20,-40,60,40 </li>
