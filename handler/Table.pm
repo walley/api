@@ -20,6 +20,7 @@
 package Guidepost::Table;
 
 use utf8;
+use JSON;
 
 use Apache2::Reload;
 use Apache2::RequestRec ();
@@ -106,9 +107,10 @@ sub handler
     $r->content_type('text/html; charset=utf-8');
   } elsif ($get_data{output} eq "geojson") {
     $OUTPUT_FORMAT = "geojson";
-#    $r->content_type('application/json; charset=utf-8');
     $r->content_type('text/plain; charset=utf-8');
-#    $r->content_type('text/html; charset=utf-8');
+  } elsif ($get_data{output} eq "json") {
+    $OUTPUT_FORMAT = "json";
+    $r->content_type('text/plain; charset=utf-8');
   } elsif ($get_data{output} eq "kml") {
     $OUTPUT_FORMAT = "kml";
   }
@@ -171,6 +173,9 @@ sub handler
     &get_nearby($get_data{lat}, $get_data{lon}, $get_data{distance}, $get_data{limit});
   } elsif ($uri =~ "/table/tags/delete") {
     &delete_tags($uri_components[4], $uri_components[5]);
+  } elsif ($uri =~ "/table/hashtag") {
+    #tag search
+    &hashtag($uri_components[3]);
   } elsif ($uri =~ "/table/tags/add") {
     #id,val
     &add_tags($uri_components[4], $uri_components[5]);
@@ -490,6 +495,21 @@ sub show_by
   $error_result = &output_data($query);
 }
 
+################################################################################
+sub hashtag
+################################################################################
+{
+  my ($tag) = @_;
+  my ($k, $v) = split(":", $tag);
+
+  $query = "select guidepost.* from guidepost,tags where guidepost.id=tags.gp_id and tags.k='$k' and tags.v='$v'";
+
+  if ($BBOX) {
+    $query .= " and ".&add_bbox();
+  }
+
+  $error_result = &output_data($query);
+}
 
 ################################################################################
 sub output_data
@@ -498,12 +518,14 @@ sub output_data
   my ($query) = @_;
   my $ret;
 
-  syslog("info", "output_data query:" . $query);
+  syslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
 
   if ($OUTPUT_FORMAT eq "html") {
     $ret = output_html($query);
   } elsif ($OUTPUT_FORMAT eq "geojson") {
     $ret = output_geojson($query);
+  } elsif ($OUTPUT_FORMAT eq "json") {
+    $ret = output_json($query);
   } elsif ($OUTPUT_FORMAT eq "kml") {
     $ret = output_kml($query);
   }
@@ -511,6 +533,29 @@ sub output_data
   syslog("info", "output_data result:" . $ret);
 
   return $ret;
+}
+
+################################################################################
+sub output_json
+################################################################################
+{
+  use utf8;
+
+  my ($query) = @_;
+
+  my $pt;
+  my $ft;
+  my @feature_objects;
+
+  $res = $dbh->selectall_arrayref($query);
+  $r->print(encode_json($res));
+
+  if (!$res) {
+    print $DBI::errstr;
+    return Apache2::Const::SERVER_ERROR;
+  }
+
+  return Apache2::Const::OK;
 }
 
 ################################################################################
@@ -603,7 +648,7 @@ sub output_geojson
 
     $pt = Geo::JSON::Point->new({
       coordinates => [$fixed_lon, $fixed_lat],
-      properties => ["prop0", "value0"],
+      properties => ["yay", "woohoo"],
     });
 
     my %properties = (
@@ -645,7 +690,6 @@ sub table_get
 
   my $from_gp = looks_like_number($pf) ? $pf : 0;
   my $to_gp = looks_like_number($pt) ? $pt : 0;
-  $out .= "<h1>from ($pf $pt) ($from_gp) ($to_gp)</h1><hr>";
 
   my $query = "select * from guidepost LIMIT " . ($to_gp - $from_gp) . " OFFSET $from_gp";
   $res = $dbh->selectall_arrayref($query);
@@ -1449,8 +1493,12 @@ sub remove
   syslog('info', $r->connection->remote_ip . " wants to remove $id");
   $query = "insert into changes (gp_id, action) values ($id, 'remove')";
   my $sth = $dbh->prepare($query);
-  my $rv = $sth->execute() or die $DBI::errstr;
-  print $query;
+  my $res = $sth->execute();
+  if (!$res) {
+    syslog("info", "remove db error " . $DBI::errstr . " $query");
+    $error_result = 500;
+    return;
+  }
 }
 
 ################################################################################
@@ -1461,7 +1509,6 @@ sub get_nearby()
   syslog('info', "get_nearby(" . "$lat $lon $m)");
   ($minlat, $minlon) = get_latlon_offset_bbox($lat, $lon, -1 * $m, -1 * $m);
   ($maxlat, $maxlon) = get_latlon_offset_bbox($lat, $lon, $m, $m);
-#  syslog('info', "get_nearby " . "$minlat $minlon $maxlat $maxlon");
   $BBOX = 1;
   $OUTPUT_FORMAT = "geojson";
   &output_all();
