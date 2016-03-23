@@ -844,7 +844,7 @@ sub id_stuff
   $ret .= "<div class='Table'>\n";
   $ret .= "<div class='Row'>\n";
   $ret .= "<div class='Cell'>\n";
-  $ret .= "<h2>$id</h2>\n";
+  $ret .= qq|<h2><a href="/table/id/$id" target="_blank">$id</h2>\n|;
   $ret .= "</div>\n";
   $ret .= "</div>\n";
   $ret .= "<div class='Row'>\n";
