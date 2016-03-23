@@ -22,25 +22,21 @@ package Guidepost::Table;
 use utf8;
 use JSON;
 
+use Apache2::Connection ();
+#use Apache2::Const -compile => qw(MODE_READBYTES);
+use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
+use Apache2::Filter ();
 use Apache2::Reload;
-use Apache2::RequestRec ();
 use Apache2::RequestIO ();
+use Apache2::RequestRec ();
 use Apache2::URI ();
 
-use APR::URI ();
 use APR::Brigade ();
 use APR::Bucket ();
-use Apache2::Filter ();
-
-#use Apache2::Const -compile => qw(MODE_READBYTES);
 #use APR::Const    -compile => qw(SUCCESS BLOCK_READ);
-
-use constant IOBUFSIZE => 8192;
-use Apache2::Connection ();
-use Apache2::RequestRec ();
-
 use APR::Const -compile => qw(URI_UNP_REVEALPASSWORD);
-use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
+use APR::URI ();
+use constant IOBUFSIZE => 8192;
 
 use DBI;
 
@@ -63,6 +59,8 @@ use Encode;
 #binmode STDOUT, ':utf8';
 
 use Net::Subnet;
+use Image::ExifTool;
+
 
 my $dbh;
 my $BBOX = 0;
@@ -128,7 +126,7 @@ sub handler
   $error_result = Apache2::Const::OK;
 
   my $api_request = $uri_components[2];
-  syslog('info', "request $api_request, method " . $r->method());
+  syslog('info', "request $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT);
 
 
   if ($uri =~ "table\/all") {
@@ -152,6 +150,8 @@ sub handler
     &show_by($uri_components[3],"note");
   } elsif ($uri =~ "/table/setbyid") {
     &set_by_id($post_data{id}, $post_data{value});
+  } elsif ($uri =~ "/table/move") {
+    &move_photo($post_data{id}, $post_data{lat}, $post_data{lon});
   } elsif ($uri =~ "isedited") {
     #/isedited/ref/id
     &is_edited($uri_components[3], $uri_components[4]);
@@ -182,6 +182,8 @@ sub handler
   } elsif ($uri =~ "/table/tags") {
     my $out = &get_tags($uri_components[3]);
     $r->print($out);
+  } elsif ($uri =~ "/table/exif") {
+    &exif($uri_components[3]);
   }
 #Dumper(\%ENV);
 #    connection_info($r->connection);
@@ -312,19 +314,19 @@ sub connection_info
 sub rrr
 ################################################################################
 {
-   $parsed_uri = $r->parsed_uri();
+  $parsed_uri = $r->parsed_uri();
 
-    print "s".$parsed_uri->scheme;print "<br>";
-    print "u".$parsed_uri->user;print "<br>";
-    print "pw".$parsed_uri->password;print "<br>";
-    print "h".$parsed_uri->hostname;print "<br>";
-    print "pt".$parsed_uri->port;print "<br>";
-    print "pa".$parsed_uri->path;print "<br>";
-    print "rpa".$parsed_uri->rpath;print "<br>";
-    print "q".$parsed_uri->query;print "<br>";
-    print "f".$parsed_uri->fragment;print "<br>";
-    print "<hr>\n";
- }
+  print "s".$parsed_uri->scheme;print "<br>";
+  print "u".$parsed_uri->user;print "<br>";
+  print "pw".$parsed_uri->password;print "<br>";
+  print "h".$parsed_uri->hostname;print "<br>";
+  print "pt".$parsed_uri->port;print "<br>";
+  print "pa".$parsed_uri->path;print "<br>";
+  print "rpa".$parsed_uri->rpath;print "<br>";
+  print "q".$parsed_uri->query;print "<br>";
+  print "f".$parsed_uri->fragment;print "<br>";
+  print "<hr>\n";
+}
 
 ################################################################################
 sub say_goodbye
@@ -390,17 +392,17 @@ sub parse_post_data
     $post_data{$_} =~ s/\+/ /g;
     $post_data{$_} =~ s/\%2F/\//g;
     $post_data{$_} =~ s/\%2C/,/g;
-    syslog('info', "postdata after decode " . $_ . "=" . $post_data{$_});
 
     if (lc $_ eq "id" ) {
       $post_data{$_} =~ s/[^A-Za-z0-9_\/]//g;
     } elsif (lc $_ eq "value" ) {
-      syslog('info',"value");
-      $post_data{$_} =~ s/[^A-Za-z0-9_ \p{IsLatin}\/,]//g;
+      $post_data{$_} =~ s/[^A-Za-z0-9_ \p{IsLatin}\/,\;]//g;
+    } elsif (lc $_ eq "lat" or lc $_ eq "lon") {
+      $post_data{$_} =~ s/[^0-9.]//g;
     } else {
       $post_data{$_} =~ s/[^A-Za-z0-9 ]//g;
     }
-#    syslog('info', "postdata " . $_ . "=" . $post_data{$_});
+    syslog('info', "postdata after" . $_ . "=" . $post_data{$_});
   }
 }
 
@@ -410,8 +412,6 @@ sub connect_db
 {
   my $dbfile = '/var/www/mapy/guidepost';
 
-#  $dbh = DBI->connect( "dbi:SQLite:$dbfile" );
-
   $dbh = DBI->connect("dbi:SQLite:$dbfile", "", "",
     {
 #       RaiseError     => 1,
@@ -419,13 +419,10 @@ sub connect_db
     }
   );
 
-
   if (!$dbh) {
-#    &debuglog("db failed","Cannot connect: ".$DBI::errstr);
+    syslog('info', "Cannot connect to db: " . $DBI::errstr);
     die;
   }
-#  my $sql = qq{SET NAMES 'utf8';};
-#  $dbh->do($sql);
 }
 
 ################################################################################
@@ -767,7 +764,7 @@ sub init_inplace_edit()
   $out .= "     event       : 'click',\n";
   $out .= "     width       : 100,\n";
   $out .= "     select      : true,\n";
-  $out .= "     placeholder : '" . &t("edited") . "',\n";
+  $out .= "     placeholder : '" . &t("edited") . "...',\n";
   $out .= "     tooltip     : '" . &t("Click to edit...") . "',\n";
   $out .= " 
   callback : function(value, settings) {
@@ -886,7 +883,7 @@ sub t()
   if ($s eq "Click to show items containing") {return "Zobraz položky obsahující";}
   if ($s eq "note") {return "Poznámka";}
   if ($s eq "nothing") {return "Vlož text ...";}
-  if ($s eq "edited") {return "Editováno ...";}
+  if ($s eq "edited") {return "Editováno";}
   if ($s eq "remove_picture") {return "Smazat obrázek. Smazána budou pouze metadata, fotka bude skryta.";}
   if ($s eq "attribute") {return "Atribut";}
   if ($s eq "value") {return "Hodnota";}
@@ -1076,7 +1073,7 @@ sub gp_line()
   $out .= "<script>\n";
   $out .= "\$('#ta" . $id . "').tagEditor({
 
-   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila'] },
+   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka'] },
    placeholder: 'Vložte tagy ...',
 
    onChange: function(field, editor, tags) {
@@ -1183,11 +1180,40 @@ sub set_by_id()
   my @data = split("_", $id);
   $db_id = $data[1];
   $db_col = $data[0];
-  $query = "insert into changes (gp_id, col, value, action) values ($db_id, '$db_col', '$val', 'edit')";
-#  syslog('info', $query);
+  if ($db_col eq 'lat' or $db_col eq 'lon') {
+    $query = "insert into changes (gp_id, col, value, action) values ($db_id, '$db_col', '$val', 'position')";
+  } else {
+    $query = "insert into changes (gp_id, col, value, action) values ($db_id, '$db_col', '$val', 'edit')";
+  }
+
   syslog('info', $r->connection->remote_ip . " wants to change id:$db_id, '$db_col' to '$val'");
   my $sth = $dbh->prepare($query);
-  my $rv = $sth->execute() or die $DBI::errstr;
+  my $res = $sth->execute();
+#  my $res = $dbh->do($query, undef, $db_id, $db_col, $val);
+
+  if (!$res) {
+    syslog("info", "set_by_id($id, $val): dbi error " . $DBI::errstr);
+    $error_result = 500;
+  }
+}
+
+
+################################################################################
+sub move_photo()
+################################################################################
+{
+  my ($id, $lat, $lon) = @_;
+
+  $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
+
+  syslog('info', $r->connection->remote_ip . " wants to move id:$id, to position '$lat' to '$lon'");
+
+  my $res = $dbh->do($query, undef, $id, $lat, $lon);
+
+  if (!$res) {
+    syslog("info", "move_photo($id, $lat, $lon): dbi error " . $DBI::errstr);
+    $error_result = 500;
+  }
 }
 
 ################################################################################
@@ -1226,8 +1252,13 @@ sub review_entry
 
   $out .= "<div id='reviewdiv$req_id'>";
   $out .= "<table>";
-  $out .= "<tr>";
-  $out .= "\n";
+  $out .= "<tr>\n";
+
+  $out .= "<td>change id:$id</td>";
+  $out .= "<td>guidepost id:<a href='http://api.openstreetmap.cz/table/id/$gp_id'>$gp_id</a></td>";
+
+  $out .= "</tr>\n";
+  $out .= "<tr>\n";
 
   if ($action eq "remove") {
     $out .= "<td><h2>DELETE</h2></td>";
@@ -1235,10 +1266,25 @@ sub review_entry
     $out .= "<td> <h2>add tags</h2></td>";
     $out .= "<td>Key: $col</td>";
     $out .= "<td>Value: $value</td>";
+  } elsif ($action eq "position") {
+    $out .= "<td> <h2>move photo</h2></td>";
+
+    $oldlat = &get_gp_column_value($gp_id, 'lat');
+    $oldlon = &get_gp_column_value($gp_id, 'lon');
+
+    my $lat = $col;
+    my $lon = $value;
+    my $static_map = "http://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$oldlat,$oldlon&zoom=15&size=200,200&type=map&imagetype=png&pois=f,$oldlat,$oldlon|t,$lat,$lon";
+    $out .= "<td>\n";
+    $out .=  "<img class='xzoom' src='".$static_map."'/>";
+    $out .= "</td>\n";
+
+    $out .= "<td>from lat;lon:<font color='red'>  $oldlat;$oldlon</font></td>";
+    $out .= "<td>to lat;lon:<font color='green'>  $col;$value</font></td>";
+
   } elsif ($action eq "deltag") {
     $out .= "<td> <h2>delete tags</h2></td>";
-    $out .= "<td>Key: $col</td>";
-    $out .= "<td>Value: $value</td>";
+    $out .= "<td>'$col:$value</td>";
   } elsif ($action eq "edit") {
 
     $out .= "<td> <h2>change value</h2></td>";
@@ -1246,12 +1292,10 @@ sub review_entry
     $original = &get_gp_column_value($gp_id, $col);
 
     $out .= "<td>column: $col</td>";
-    $out .= "<td>original value: $original</td>";
-    $out .= "<td>value: $value</td>";
+    $out .= "<td>original value: <font color='red'>$original</font></td>";
+    $out .= "<td>new value: <font color='green'>$value</font></td>";
   }
 
-  $out .= "<td>change id:$id</td>";
-  $out .= "<td>guidepost id:<a href='http://api.openstreetmap.cz/table/id/$gp_id'>$gp_id</a></td>";
 
   $out .= "\n";
 
@@ -1290,31 +1334,31 @@ sub get_gp_column_value
     syslog("info", "get_gp_column_value $query");
   }
 
-  @res = $dbh->selectrow_array($query) or return "db error error";
+  $res = $dbh->selectrow_arrayref($query);
 
   if (!$res) {
-    syslog("info", "get_gp_column_value dberror " . $DBI::errstr . " $query");
+    syslog("info", "get_gp_column_value: dberror '" . $DBI::errstr . "' q: $query");
     return "error";
   }
 
-  return $res[0];
+  return @$res[0];
 }
 
 ################################################################################
 sub review_form
 ################################################################################
 {
+  my $out = "";
 
   my $query = "select guidepost.name, changes.id, changes.gp_id, changes.col, changes.value, changes.action from changes, guidepost where changes.gp_id=guidepost.id limit 20";
   $res = $dbh->selectall_arrayref($query);
-  print $DBI::errstr;
-#http://code.jquery.com/jquery-1.11.3.min.js
-#http://code.jquery.com/jquery-2.1.4.min.js
-  my @a = ("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js");
-  print &page_header(\@a);
+  $out .= $DBI::errstr;
 
-  print "<script>";
-  print "
+  my @a = ("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js");
+  $out .= &page_header(\@a);
+
+  $out .= "<script>";
+  $out .= "
 function approve(id,divid)
 {
   \$.ajax( 'http://api.openstreetmap.cz/table/approve/' + id, function(data) {
@@ -1324,7 +1368,7 @@ function approve(id,divid)
   \$('#reviewdiv'+divid).css('background-color', 'lightgreen');
   })
   .fail(function() {
-    alert( 'error' );
+    alert( 'error '+status+'.');
   })
   .always(function() {
   });
@@ -1347,22 +1391,24 @@ function reject(id,divid)
 
 ";
 
-  print "</script>";
+  $out .= "</script>";
 
-  print "\n<h1>Review</h1>\n";
+  $out .= "\n<h1>Review</h1>\n";
 
   my $req_id = 0;
   foreach my $row (@$res) {
     my ($img, $id, $gp_id, $col, $value, $action) = @$row;
-    print &review_entry($req_id++, $id, $gp_id, $col, $value, $img, $action);
+    $out .= &review_entry($req_id++, $id, $gp_id, $col, $value, $img, $action);
   }
 
-  print "<script>";
-#  print "wheelzoom(document.querySelector('img.wheelzoom'));";
-  print "wheelzoom(document.querySelectorAll('img'));";
-  print "</script>\n";
+  $out .= "<script>";
+#  $out .= "wheelzoom(document.querySelector('img.wheelzoom'));";
+  $out .= "wheelzoom(document.querySelectorAll('img'));";
+  $out .= "</script>\n";
 
-  &page_footer();
+  $out .= &page_footer();
+
+  $r->print($out);
 }
 
 ################################################################################
@@ -1382,7 +1428,7 @@ sub is_edited
   }
 
   if ($res[0] > 0) {
-    $out = " edited " . $ret[0] . "x";
+    $out = " ".&t("edited"). " " . $res[0] . "x";
   } else {
     $out = "";
   }
@@ -1421,6 +1467,20 @@ sub reject_edit
 }
 
 ################################################################################
+sub db_do
+################################################################################
+{
+  my ($query) = @_;
+
+  $res = $dbh->do($query);
+
+  if (!$res) {
+    syslog("info", "db_do(): dberror:" . $DBI::errstr . " q: $query");
+    $error_result = 500;
+  }
+}
+
+################################################################################
 sub approve_edit
 ################################################################################
 {
@@ -1435,26 +1495,34 @@ sub approve_edit
   my ($xid, $gp_id, $col, $value, $action) = @res;
 
   if ($action eq "remove") {
-    syslog('info', "deleting");
+    syslog('info', "deleting $gp_id");
     &delete_id($gp_id);
   } elsif ($action eq "addtag") {
     my $query = "insert into tags values (null, $gp_id, '$col', '$value')";
     syslog('info', "adding tags " . $query);
-    $rv  = $dbh->do($query) or return $dbh->errstr;
+    &db_do($query);
   } elsif ($action eq "edit") {
     my $query = "update guidepost set $col='$value' where id=$gp_id";
     syslog('info', "updating " . $query);
-    $rv  = $dbh->do($query) or return $dbh->errstr;
+    &db_do($query);
+  } elsif ($action eq "position") {
+    my $query = "update guidepost set lat='$col', lon='$value' where id=$gp_id";
+    syslog('info', "moving photo " . $query);
+    &db_do($query);
   } elsif ($action eq "deltag") {
     my $query = "delete from tags where gp_id=$gp_id and k='$col' and v='$value'";
     syslog('info', "deleting tags " . $query);
-    $rv  = $dbh->do($query) or return $dbh->errstr;
+    &db_do($query);
+  }
+
+  if ($error_result > 300) {
+    syslog('info', "approve_edit() error");
+    return;
   }
 
   my $query = "delete from changes where id=$id";
   syslog('info', "removing change request " . $query);
-  $rv  = $dbh->do($query) or return $dbh->errstr;
-  return "OK $id changed";
+  &db_do($query);
 }
 
 ################################################################################
@@ -1604,7 +1672,63 @@ sub delete_tags()
     syslog("info", "add_tags($tag): dbi error " . $DBI::errstr);
     $error_result = 500;
   }
+}
 
+################################################################################
+sub exif()
+################################################################################
+{
+  my $image_location = "/home/walley/www/mapy/img/guidepost";
+  my ($id) = @_;
+  my $image_file = &get_gp_column_value($id, 'name');
+  my $out = "";
+  my $image = $image_location."/".$image_file;
+
+  syslog("info", "exif: " . $image);
+  my $exifTool = new Image::ExifTool;
+  $exifTool->Options(Unknown => 1);
+  my $info = $exifTool->ImageInfo($image );
+  my $group = '';
+  my $tag;
+  foreach $tag ($exifTool->GetFoundTags('Group0')) {
+    if ($group ne $exifTool->GetGroup($tag)) {
+      $group = $exifTool->GetGroup($tag);
+#      $out .= "---- $group ----\n";
+    }
+    my $val = $info->{$tag};
+    if (ref $val eq 'SCALAR') {
+      if ($$val =~ /^Binary data/) {
+        $val = "($$val)";
+      } else {
+        my $len = length($$val);
+        $val = "(Binary data $len bytes)";
+      }
+    }
+#    $out .= sprintf("%-32s : %s\n", $exifTool->GetDescription($tag), $val);
+    $exifdata{$group}{$exifTool->GetDescription($tag)} = $val;
+  }
+
+  if ($OUTPUT_FORMAT eq "geojson" or $OUTPUT_FORMAT eq "kml") {
+  #Bad Request
+    $error_result = 400;
+    return;
+  } elsif ($OUTPUT_FORMAT eq "html") {
+    $out .= "<table>\n";
+    foreach $item (keys %exifdata) {
+      $out .= "<tr>\n";
+      $out .= "<th>$item</th>";
+      $out .= "</tr>\n";
+      foreach $iteminitem (keys %{$exifdata{$item}}){
+      $out .= "<tr>\n";
+        $out .= "<td>$iteminitem</td> <td>$exifdata{$item}{$iteminitem}</td>";
+      $out .= "</tr>\n";
+      }
+    }
+    $out .= "</table>\n";
+    $r->print($out);
+  } elsif ($OUTPUT_FORMAT eq "json") {
+    $r->print(encode_json(\%exifdata));
+  }
 
 }
 
