@@ -60,7 +60,7 @@ use Encode;
 
 use Net::Subnet;
 use Image::ExifTool;
-
+use LWP::Simple;
 
 my $dbh;
 my $BBOX = 0;
@@ -184,6 +184,10 @@ sub handler
     $r->print($out);
   } elsif ($uri =~ "/table/exif") {
     &exif($uri_components[3]);
+  } elsif ($uri =~ "/table/robot") {
+    &robot();
+  } elsif ($uri =~ "/table/ping") {
+    $r->print("pong");
   }
 #Dumper(\%ENV);
 #    connection_info($r->connection);
@@ -196,6 +200,7 @@ sub handler
 
   if ($error_result) {
     if ($error_result == 400) {error_400();}
+    if ($error_result == 404) {error_401();}
     if ($error_result == 404) {error_404();}
     if ($error_result == 500) {error_500();}
     $r->status($error_result);
@@ -215,6 +220,22 @@ sub error_400()
 </head><body>
 <h1>This is bad</h1>
 <p>and you should feel bad</p>
+<hr>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+</body></html>
+');
+}
+
+################################################################################
+sub error_400()
+################################################################################
+{
+  $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>401 Unauthorized</title>
+</head><body>
+<h1>You can not do this</h1>
+<p>to me:(</p>
 <hr>
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
 </body></html>
@@ -286,6 +307,7 @@ sub check_privileged_access()
   my $ok = subnet_matcher qw(
     185.93.61.1/32
     195.113.123.0/24
+    31.31.78.232/32
   );
   if ($ok->($r->connection->remote_ip)) {
     return 1;
@@ -586,9 +608,8 @@ sub output_html
   $res = $dbh->selectall_arrayref($query);
   if (!$res) {
     syslog("info", "output_html dberror" . $DBI::errstr);
-    $out = "DB error";
-    print $out;
-    return;
+    $error_status = 500;
+    return 500;
   }
 
   my $num_elements = @$res;
@@ -844,7 +865,7 @@ sub id_stuff
   $ret .= "<div class='Table'>\n";
   $ret .= "<div class='Row'>\n";
   $ret .= "<div class='Cell'>\n";
-  $ret .= qq|<h2><a href="/table/id/$id" target="_blank">$id</h2>\n|;
+  $ret .= "<h2><a href='/table/id/$id' target='_blank'>$id</a></h2>\n";
   $ret .= "</div>\n";
   $ret .= "</div>\n";
   $ret .= "<div class='Row'>\n";
@@ -1284,7 +1305,7 @@ sub review_entry
 
   } elsif ($action eq "deltag") {
     $out .= "<td> <h2>delete tags</h2></td>";
-    $out .= "<td>'$col:$value</td>";
+    $out .= "<td> tag $col:$value.</td>";
   } elsif ($action eq "edit") {
 
     $out .= "<td> <h2>change value</h2></td>";
@@ -1486,7 +1507,10 @@ sub approve_edit
 {
   my ($id) = @_;
 
-  if (!&check_privileged_access()) {return;}
+  if (!&check_privileged_access()) {
+    $error_result = 401;
+    return;
+  }
 
   syslog('info', "accepting change id: " . $id);
 
@@ -1730,6 +1754,37 @@ sub exif()
     $r->print(encode_json(\%exifdata));
   }
 
+}
+
+################################################################################
+sub robot()
+################################################################################
+{
+  syslog('info', "robot run!");
+
+  my $query = "select * from changes";
+
+  $res = $dbh->selectall_arrayref($query);
+  if (!$res) {
+    $error_result = 500;
+    syslog('info', "robot error: $DBI::errstr");
+    return Apache2::Const::SERVER_ERROR;
+  };
+
+  foreach my $row (@$res) {
+    my ($id, $gp_id, $col, $value, $action) = @$row;
+    syslog('info', "robot row: ($id, $gp_id, $col, $value, $action)");
+    if ($action eq "addtag") {
+      my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+      syslog('info', "robot: get $url");
+      my $content = get($url);
+#      my $content = get("http://api.openstreetmap.cz/table/ping");
+      syslog('info', "robot: " . $content);
+      $r->print("returned $content");
+    } else {
+      syslog('info', "no robot");
+    }
+  }
 }
 
 1;
