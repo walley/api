@@ -120,7 +120,7 @@ sub handler
   @uri_components = split("/", $uri);
 
   foreach $text (@uri_components) {
-    $text =~ s/[^A-Za-z0-9ěščřžýáíéĚŠČŘŽÝÁÍÉůúŮÚ.:]//g;
+    $text =~ s/[^A-Za-z0-9ěščřžýáíéĚŠČŘŽÝÁÍÉůúŮÚ.:, ]//g;
   }
 
   $error_result = Apache2::Const::OK;
@@ -206,7 +206,7 @@ sub handler
 
   if ($error_result) {
     if ($error_result == 400) {error_400();}
-    if ($error_result == 404) {error_401();}
+    if ($error_result == 401) {error_401();}
     if ($error_result == 404) {error_404();}
     if ($error_result == 500) {error_500();}
     $r->status($error_result);
@@ -233,7 +233,7 @@ sub error_400()
 }
 
 ################################################################################
-sub error_400()
+sub error_401()
 ################################################################################
 {
   $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -1693,6 +1693,11 @@ sub delete_tags()
 {
   my ($id, $tag) = @_;
   my ($k, $v) = split(":", $tag);
+
+  if ($k eq"" and  $v eq "") {
+    $error_result = 400;
+    return;
+  }
 
   $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'deltag')";
   syslog("info", "delete_tags($tag):" . $query);
