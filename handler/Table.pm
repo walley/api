@@ -180,8 +180,14 @@ sub handler
     #id,val
     &add_tags($uri_components[4], $uri_components[5]);
   } elsif ($uri =~ "/table/tags") {
-    my $out = &get_tags($uri_components[3]);
-    $r->print($out);
+    if ($r->method() eq "GET") {
+      my $out = &get_tags($uri_components[3]);
+      $r->print($out);
+    } elsif ($r->method() eq "DELETE") {
+      #&delete_tags($uri_components[4], $uri_components[5]);
+    } elsif ($r->method() eq "POST") {
+      &add_tags($post_data{id}, $post_data{tag});
+    }
   } elsif ($uri =~ "/table/exif") {
     &exif($uri_components[3]);
   } elsif ($uri =~ "/table/robot") {
@@ -421,6 +427,8 @@ sub parse_post_data
       $post_data{$_} =~ s/[^A-Za-z0-9_ \p{IsLatin}\/,\;]//g;
     } elsif (lc $_ eq "lat" or lc $_ eq "lon") {
       $post_data{$_} =~ s/[^0-9.]//g;
+    } elsif (lc $_ eq "tag") {
+      $post_data{$_} =~ s/[^A-Za-z0-9_: \p{IsLatin},]//g;
     } else {
       $post_data{$_} =~ s/[^A-Za-z0-9 ]//g;
     }
@@ -1096,6 +1104,7 @@ sub gp_line()
 
    autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka'] },
    placeholder: 'Vložte tagy ...',
+   delimiter:';',
 
    onChange: function(field, editor, tags) {
    },
