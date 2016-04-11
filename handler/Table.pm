@@ -1111,7 +1111,9 @@ sub gp_line()
 
    beforeTagSave: function(field, editor, tags, tag, val) {
      \$.ajax({
-      url: 'http://api.openstreetmap.cz/table/tags/add/" . $id . "/' + val,
+      type: 'POST',
+      url: 'http://api.openstreetmap.cz/table/tags/',
+      data: 'id=" . $id . "&tag=' + val,
       timeout:3000
     })
     .done(function(data) {
