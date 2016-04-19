@@ -70,6 +70,7 @@ my $minlat;
 my $maxlon;
 my $maxlat;
 my $error_result;
+my $remote_ip;
 
 ################################################################################
 sub handler
@@ -78,11 +79,15 @@ sub handler
   $BBOX = 0;
   $LIMIT = 0;
 
+
   $r = shift;
+
+  $remote_ip = $r->connection->remote_ip || '127.0.0.254'; #apache 2.4 hack
+
   openlog('guidepostapi', 'cons,pid', 'user');
 
   if (&check_ban()) {
-    syslog('info', 'access denied:' . $r->connection->remote_ip);
+    syslog('info', 'access denied:' . $remote_ip);
     return Apache2::Const::OK;
   }
 
@@ -304,7 +309,7 @@ sub check_ban()
     66.249.64.0/24
   );
 #doubrava  185.93.61.0/24
-  return ($banned->($r->connection->remote_ip));
+  return ($banned->($remote_ip));
 }
 
 ################################################################################
@@ -316,10 +321,10 @@ sub check_privileged_access()
     195.113.123.0/24
     31.31.78.232/32
   );
-  if ($ok->($r->connection->remote_ip)) {
+  if ($ok->($remote_ip)) {
     return 1;
   } else {
-    syslog('info', 'privileged access denied:' . $r->connection->remote_ip);
+    syslog('info', 'privileged access denied:' . $remote_ip);
     return 0;
   }
 }
@@ -1219,7 +1224,7 @@ sub set_by_id()
     $query = "insert into changes (gp_id, col, value, action) values ($db_id, '$db_col', '$val', 'edit')";
   }
 
-  syslog('info', $r->connection->remote_ip . " wants to change id:$db_id, '$db_col' to '$val'");
+  syslog('info', $remote_ip . " wants to change id:$db_id, '$db_col' to '$val'");
   my $sth = $dbh->prepare($query);
   my $res = $sth->execute();
 #  my $res = $dbh->do($query, undef, $db_id, $db_col, $val);
@@ -1239,7 +1244,7 @@ sub move_photo()
 
   $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
 
-  syslog('info', $r->connection->remote_ip . " wants to move id:$id, to position '$lat' to '$lon'");
+  syslog('info', $remote_ip . " wants to move id:$id, to position '$lat' to '$lon'");
 
   my $res = $dbh->do($query, undef, $id, $lat, $lon);
 
@@ -1594,7 +1599,7 @@ sub remove
 ################################################################################
 {
   my ($id) = @_;
-  syslog('info', $r->connection->remote_ip . " wants to remove $id");
+  syslog('info', $remote_ip . " wants to remove $id");
   $query = "insert into changes (gp_id, action) values ($id, 'remove')";
   my $sth = $dbh->prepare($query);
   my $res = $sth->execute();
@@ -1681,7 +1686,7 @@ sub add_tags()
   $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'addtag')";
 
   syslog("info", "add_tags($tag):" . $query);
-  syslog('info', $r->connection->remote_ip . " wants to add tag ($k:$v) for id:$id");
+  syslog('info', $remote_ip . " wants to add tag ($k:$v) for id:$id");
 
   my $sth = $dbh->prepare($query);
   my $res = $sth->execute();
@@ -1707,7 +1712,7 @@ sub delete_tags()
 
   $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'deltag')";
   syslog("info", "delete_tags($tag):" . $query);
-  syslog('info', $r->connection->remote_ip . " wants to delete tag ($k:$v) for id:$id");
+  syslog('info', $remote_ip . " wants to delete tag ($k:$v) for id:$id");
 
   my $sth = $dbh->prepare($query);
   my $res = $sth->execute();
