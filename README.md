@@ -1,6 +1,32 @@
 # api
 api, backend, scripts
 
+You need to have mod_perl from http://perl.apache.org/ installed.
+
+
+##apache configuration
+
+<DirectoryMatch "^/.*/\.git/">
+  Order deny,allow
+  Deny from all
+</DirectoryMatch>
+
+Header set Access-Control-Allow-Origin "*"
+PerlRequire /var/www/api/handler/startup.pl
+PerlSetVar ReloadAll Off
+
+<Location /table>
+  SetHandler perl-script
+  PerlResponseHandler Guidepost::Table
+  PerlOptions +ParseHeaders
+</Location>
+
+<Location /commons>
+  SetHandler perl-script
+  PerlResponseHandler Guidepost::Commons
+  PerlOptions +ParseHeaders
+</Location>
+
 ##sqlite3 schema
 
 CREATE TABLE changes (
