@@ -3,32 +3,33 @@ api, backend, scripts
 
 You need to have mod_perl from http://perl.apache.org/ installed.
 
-
 ##apache configuration
 
-<DirectoryMatch "^/.*/\.git/">
-  Order deny,allow
-  Deny from all
-</DirectoryMatch>
+```
+  <DirectoryMatch "^/.*/\.git/">
+    Order deny,allow
+    Deny from all
+  </DirectoryMatch>
 
-Header set Access-Control-Allow-Origin "*"
-PerlRequire /var/www/api/handler/startup.pl
-PerlSetVar ReloadAll Off
+  Header set Access-Control-Allow-Origin "*"
+  PerlRequire /var/www/api/handler/startup.pl
+  PerlSetVar ReloadAll Off
 
-<Location /table>
-  SetHandler perl-script
-  PerlResponseHandler Guidepost::Table
-  PerlOptions +ParseHeaders
-</Location>
+  <Location /table>
+    SetHandler perl-script
+    PerlResponseHandler Guidepost::Table
+    PerlOptions +ParseHeaders
+ </Location>
 
-<Location /commons>
-  SetHandler perl-script
-  PerlResponseHandler Guidepost::Commons
-  PerlOptions +ParseHeaders
-</Location>
+  <Location /commons>
+    SetHandler perl-script
+    PerlResponseHandler Guidepost::Commons
+    PerlOptions +ParseHeaders
+  </Location>
+```
 
 ##sqlite3 schema
-
+```sql
 CREATE TABLE changes (
   id integer primary key AUTOINCREMENT,
   gp_id integer,
@@ -54,7 +55,7 @@ create table tags (
   k varchar,
   v varchar
 );
-
+```
 ##dirs:
 commons - bunch of scripts used to create commons db
 handler - mod_perl handlers
