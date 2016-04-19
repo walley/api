@@ -64,3 +64,7 @@ handler - mod_perl handlers
 ##guidepost api:
 
 see editor_help.html
+
+##Development
+
+Te get development environment, just execute `vagrant up frontend` in git root. And `vagrant ssh frontend` gives you command line of that virtual machine.
