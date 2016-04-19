@@ -120,7 +120,8 @@ sub handler
   @uri_components = split("/", $uri);
 
   foreach $text (@uri_components) {
-    $text =~ s/[^A-Za-z0-9ěščřžýáíéĚŠČŘŽÝÁÍÉůúŮÚ.:, ]//g;
+    $text = &smartdecode($text);
+    $text =~ s/[^A-Za-z0-9ěščřžýáíéůúĚŠČŘŽÝÁÍÉŮÚ.:, ]//g;
   }
 
   $error_result = Apache2::Const::OK;
@@ -1657,8 +1658,11 @@ sub get_tags()
     $out_array[$i++] .= @$row[2] . ":" . @$row[3];
 #    syslog("info", "get_tags array" . $out_array[$i-1] );
   }
-
-  $out .= join(";", @out_array);
+  if ($OUTPUT_FORMAT eq "json"){
+    $out = encode_json(\@out_array);
+  } else {
+    $out .= join(";", @out_array);
+  }
   return $out;
 }
 
