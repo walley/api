@@ -5,6 +5,8 @@ You need to have mod_perl from http://perl.apache.org/ installed.
 
 ##apache configuration
 
+* guidepost db
+
 ```
   <DirectoryMatch "^/.*/\.git/">
     Order deny,allow
@@ -56,8 +58,20 @@ create table tags (
   v varchar
 );
 ```
+* commons db
+
+```
+CREATE TABLE commons(
+id integer primary key AUTOINCREMENT,
+lat numeric,
+lon numeric,
+name varchar,
+desc varchar
+);
+```
+
 ##dirs:
-commons - bunch of scripts used to create commons db
+commons-scripts - bunch of scripts used to create commons db
 handler - mod_perl handlers
 
 
