@@ -35,13 +35,14 @@ Vagrant.configure(2) do |config|
       sudo mkdir -p /var/www/mapy/ && sudo chown vagrant /var/www/mapy/
       sudo mkdir -p /var/www/zapi && sudo chown vagrant /var/www/zapi
       ls -d /var/www/zapi/handler || sudo ln -s /vagrant/handler /var/www/zapi/
+      ls -d /var/www/mapy/guidepost || sudo ln -s /vagrant/guidepost /var/www/mapy/
     EOF
 
     # create db
     frontend.vm.provision "shell",
       inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-create-schema.sql"
     # TODO what about /var/www/mapy/commons ?
-    
+
 
     # copy apache config
     frontend.vm.provision "shell", run: "always",
