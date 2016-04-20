@@ -5,7 +5,6 @@ You need to have mod_perl from http://perl.apache.org/ installed.
 
 ##apache configuration
 
-* guidepost db
 
 ```
   <DirectoryMatch "^/.*/\.git/">
@@ -31,6 +30,9 @@ You need to have mod_perl from http://perl.apache.org/ installed.
 ```
 
 ##sqlite3 schema
+
+* guidepost db
+
 ```sql
 CREATE TABLE changes (
   id integer primary key AUTOINCREMENT,

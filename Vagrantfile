@@ -40,7 +40,8 @@ Vagrant.configure(2) do |config|
 
     # create db
     frontend.vm.provision "shell",
-      inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-create-schema.sql"
+      inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-guidepostdb.sql"
+    # fixme!  inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-commons.sql"
     # TODO what about /var/www/mapy/commons ?
 
 
