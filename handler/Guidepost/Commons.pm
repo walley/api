@@ -59,6 +59,8 @@ sub handler
 ################################################################################
 {
   $r = shift;
+  $dbpath = $r->dir_config("dbpath");
+
   openlog('commonsapi', 'cons,pid', 'user');
 
   my $uri = $r->uri; 
@@ -135,7 +137,7 @@ sub output_geojson
   my $a;
 
   my $dbh = DBI->connect(
-      "dbi:SQLite:/var/www/mapy/commons", "", "",
+      "dbi:SQLite:$dbpath/commons", "", "",
       {
           RaiseError     => 1,
           sqlite_unicode => 1,

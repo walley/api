@@ -32,17 +32,16 @@ Vagrant.configure(2) do |config|
 
     # Create directory structure
     frontend.vm.provision "shell", inline: <<-EOF
-      sudo mkdir -p /var/www/mapy/ && sudo chown vagrant /var/www/mapy/
-      sudo mkdir -p /var/www/zapi && sudo chown vagrant /var/www/zapi
-      ls -d /var/www/zapi/handler || sudo ln -s /vagrant/handler /var/www/zapi/
-      ls -d /var/www/mapy/guidepost || sudo ln -s /vagrant/guidepost /var/www/mapy/
+      #wedonotneedthis sudo mkdir -p /var/www/mapy/ && sudo chown vagrant /var/www/mapy/
+      sudo mkdir -p /var/www/api && sudo chown vagrant /var/www/api
+      ls -d /var/www/api/handler || sudo ln -s /vagrant/handler /var/www/api/
+      #wedonotneedthis ls -d /var/www/mapy/guidepost || sudo ln -s /vagrant/guidepost /var/www/mapy/
     EOF
 
     # create db
     frontend.vm.provision "shell",
-      inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-guidepostdb.sql"
-    # fixme!  inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/mapy/guidepost < /vagrant/sqlite-commons.sql"
-    # TODO what about /var/www/mapy/commons ?
+      inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/guidepost < /vagrant/sqlite-guidepostdb.sql"
+    # fixme, add this  inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/commons < /vagrant/sqlite-commons.sql"
 
 
     # copy apache config

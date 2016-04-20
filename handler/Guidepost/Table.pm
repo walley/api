@@ -71,6 +71,7 @@ my $maxlon;
 my $maxlat;
 my $error_result;
 my $remote_ip;
+my $dbpath;
 
 ################################################################################
 sub handler
@@ -79,9 +80,9 @@ sub handler
   $BBOX = 0;
   $LIMIT = 0;
 
-
   $r = shift;
 
+  $dbpath = $r->dir_config("dbpath");
   $remote_ip = $r->connection->remote_ip || '127.0.0.254'; #apache 2.4 hack
 
   openlog('guidepostapi', 'cons,pid', 'user');
@@ -446,7 +447,7 @@ sub parse_post_data
 sub connect_db
 ################################################################################
 {
-  my $dbfile = '/var/www/mapy/guidepost';
+  my $dbfile = $dbpath.'/guidepost';
 
   $dbh = DBI->connect("dbi:SQLite:$dbfile", "", "",
     {
