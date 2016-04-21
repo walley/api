@@ -9,7 +9,7 @@ Vagrant.configure(2) do |config|
 
     frontend.vm.network "forwarded_port", guest: 80, host: 5000
 
-    frontend.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ".git/"
+    frontend.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [".git/", "img/"]
 
     frontend.vm.network "private_network", ip: "192.168.242.51"
 
@@ -34,10 +34,9 @@ Vagrant.configure(2) do |config|
     frontend.vm.provision "shell", inline: <<-EOF
       #fixme content of osmcz/api is meant to be content of apache virtualhost, just move the whole thing
 
-      #wedonotneedthis sudo mkdir -p /var/www/mapy/ && sudo chown vagrant /var/www/mapy/
       sudo mkdir -p /var/www/api && sudo chown vagrant /var/www/api
       ls -d /var/www/api/handler || sudo ln -s /vagrant/handler /var/www/api/
-      #wedonotneedthis ls -d /var/www/mapy/guidepost || sudo ln -s /vagrant/guidepost /var/www/mapy/
+      ls -d /var/www/api/img || sudo mkdir /var/www/api/img
     EOF
 
     # create db
