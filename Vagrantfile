@@ -51,7 +51,7 @@ Vagrant.configure(2) do |config|
       inline: "sudo cp /vagrant/httpd-api.conf /etc/httpd/conf.d/"
 
     # Disable selinux
-    frontend.vm.provision "shell",
+    frontend.vm.provision "shell", run: "always",
       inline: "sudo setenforce 0"
 
     # start apache
