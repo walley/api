@@ -83,7 +83,12 @@ sub handler
   $r = shift;
 
   $dbpath = $r->dir_config("dbpath");
-  $remote_ip = $r->connection->remote_ip || '127.0.0.254'; #apache 2.4 hack
+
+  if( $r->connection->can( 'remote_ip' ) ) {
+    $remote_ip = $r->connection->remote_ip
+  } else {
+    $remote_ip = $r->useragent_ip;
+  }
 
   openlog('guidepostapi', 'cons,pid', 'user');
 
@@ -607,7 +612,7 @@ sub output_html
 
 #<link rel="stylesheet" href="https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css">
     @s = (
-      "http://code.jquery.com/jquery-1.11.3.min.js", 
+      "http://code.jquery.com/jquery-1.11.3.min.js",
       "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
       "http://api.openstreetmap.cz/wheelzoom.js",
       "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
@@ -802,7 +807,7 @@ sub init_inplace_edit()
   $out .= "     select      : true,\n";
   $out .= "     placeholder : '" . &t("edited") . "...',\n";
   $out .= "     tooltip     : '" . &t("Click to edit...") . "',\n";
-  $out .= " 
+  $out .= "
   callback : function(value, settings) {
     console.log(this);
     console.log(value);
@@ -835,7 +840,7 @@ sub maplinks()
   $out .=  "<li><a href='http://mapy.idnes.cz/#pos=".$lat."P".$lon."P13'>idnes.cz</a>";
   $out .=  "</ul>\n";
   $out .=  "</span>\n";
-  
+
   return $out;
 }
 
@@ -902,7 +907,7 @@ sub id_stuff
        url: 'http://api.openstreetmap.cz/table/remove/$id',
     }).done(function() {
       \$('#remove$id').html('marked for deletion')
-    });  
+    });
   });
   </script>
   ";
