@@ -42,8 +42,8 @@ Vagrant.configure(2) do |config|
 
     # create db
     frontend.vm.provision "shell", inline: <<-EOF
-      ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/guidepost < /vagrant/sqlite-guidepostdb.sql"
-      ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/commons < /vagrant/sqlite-commons.sql"
+      ls /var/www/api/guidepost || sqlite3 /var/www/api/guidepost < /vagrant/sqlite-guidepostdb.sql
+      ls /var/www/api/commons || sqlite3 /var/www/api/commons < /vagrant/sqlite-commonsdb.sql
     EOF
 
 
