@@ -32,6 +32,8 @@ Vagrant.configure(2) do |config|
 
     # Create directory structure
     frontend.vm.provision "shell", inline: <<-EOF
+      #fixme content of osmcz/api is meant to be content of apache virtualhost, just move the whole thing
+
       #wedonotneedthis sudo mkdir -p /var/www/mapy/ && sudo chown vagrant /var/www/mapy/
       sudo mkdir -p /var/www/api && sudo chown vagrant /var/www/api
       ls -d /var/www/api/handler || sudo ln -s /vagrant/handler /var/www/api/
@@ -39,9 +41,10 @@ Vagrant.configure(2) do |config|
     EOF
 
     # create db
-    frontend.vm.provision "shell",
-      inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/guidepost < /vagrant/sqlite-guidepostdb.sql"
-    # fixme, add this  inline: "ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/commons < /vagrant/sqlite-commons.sql"
+    frontend.vm.provision "shell", inline: <<-EOF
+      ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/guidepost < /vagrant/sqlite-guidepostdb.sql"
+      ls /vagrant/sqlite-create-schema.sql || sqlite3 /var/www/api/commons < /vagrant/sqlite-commons.sql"
+    EOF
 
 
     # copy apache config
