@@ -680,7 +680,7 @@ sub output_geojson
   }
 
   foreach my $row (@$res) {
-    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
+    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $tags) = @$row;
 
     my $fixed_lat = looks_like_number($lat) ? $lat : 0;
     my $fixed_lon = looks_like_number($lon) ? $lon : 0;
@@ -697,6 +697,7 @@ sub output_geojson
       'name' => $name,
       'ref' => $ref,
       'note' => $note,
+      'tags' => $tags,
     );
 
     $ft = Geo::JSON::Feature->new({
