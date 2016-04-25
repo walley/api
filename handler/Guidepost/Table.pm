@@ -296,7 +296,8 @@ sub error_500()
 sub output_all()
 ################################################################################
 {
-  my $query = "select * from guidepost";
+  my $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
+
   if ($BBOX) {
     $query .= " where " . &add_bbox();
   }
