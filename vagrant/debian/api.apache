@@ -1,0 +1,66 @@
+<VirtualHost 192.168.242.52:80>
+ServerAdmin michal.grezl@openstreetmap.cz
+ServerName vagrant.openstreetmap.cz
+
+Header set Access-Control-Allow-Origin "*"
+
+DocumentRoot /var/www/api/
+LimitRequestBody 20000000
+<Directory />
+	Options FollowSymLinks
+	AllowOverride None
+</Directory>
+<Directory /var/www/api/>
+	Options Indexes +FollowSymLinks MultiViews
+	AllowOverride None
+	Order allow,deny
+	allow from all
+</Directory>
+
+ScriptAlias /cgi-bin/ /var/www/api/cgi-bin/
+<Directory "/var/www/cgi-bin">
+	AllowOverride None
+	Options ExecCGI -MultiViews +SymLinksIfOwnerMatch
+	Order allow,deny
+	Allow from all
+</Directory>
+
+# Disallow browsing of Subversion working copy administrative dirs.
+<DirectoryMatch "^/.*/\.svn/">
+  Order deny,allow
+  Deny from all
+</DirectoryMatch>
+
+<DirectoryMatch "^/.*/\.git/">
+  Order deny,allow
+  Deny from all
+</DirectoryMatch>
+
+PerlRequire /var/www/api/handler/startup.pl
+#PerlModule Apache2::Reload
+#PerlInitHandler Apache2::Reload
+PerlSetVar ReloadAll Off
+PerlSetVar dbpath "/var/www/api/"
+
+<Location /table>
+  SetHandler perl-script
+  PerlResponseHandler Guidepost::Table
+  PerlOptions +ParseHeaders
+</Location>
+
+<Location /commons>
+  SetHandler perl-script
+  PerlResponseHandler Guidepost::Commons
+  PerlOptions +ParseHeaders
+</Location>
+
+ErrorLog /var/log/apache2/zapi-error.log
+
+# Possible values include: debug, info, notice, warn, error, crit,
+# alert, emerg.
+LogLevel warn
+
+CustomLog /var/log/apache2/zapi-access.log combined
+ServerSignature On
+
+</VirtualHost>
