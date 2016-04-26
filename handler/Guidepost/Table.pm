@@ -61,6 +61,7 @@ use Encode;
 use Net::Subnet;
 use Image::ExifTool;
 use LWP::Simple;
+use Geo::Inverse;
 
 my $dbh;
 my $BBOX = 0;
@@ -1313,20 +1314,28 @@ sub review_entry
     $out .= "<td>Key: $col</td>";
     $out .= "<td>Value: $value</td>";
   } elsif ($action eq "position") {
-    $out .= "<td> <h2>move photo</h2></td>";
+    $out .= "<td><h2>move photo</h2></td>";
 
     $oldlat = &get_gp_column_value($gp_id, 'lat');
     $oldlon = &get_gp_column_value($gp_id, 'lon');
 
     my $lat = $col;
     my $lon = $value;
+
+    my $obj = Geo::Inverse->new(); # default "WGS84"
+
+    my ($faz, $baz, $dist)=$obj->inverse($oldlat,$oldlon,$lat,$lon);
+    my $dist = $obj->inverse($oldlat,$oldlon,$lat,$lon);
+
     my $static_map = "http://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$oldlat,$oldlon&zoom=15&size=200,200&type=map&imagetype=png&pois=f,$oldlat,$oldlon|t,$lat,$lon";
     $out .= "<td>\n";
     $out .=  "<img class='xzoom' src='".$static_map."'/>";
     $out .= "</td>\n";
 
-    $out .= "<td>from lat;lon:<font color='red'>  $oldlat;$oldlon</font></td>";
-    $out .= "<td>to lat;lon:<font color='green'>  $col;$value</font></td>";
+    $out .= "<td>from lat;lon: <font color='red'>$oldlat;$oldlon</font></td>";
+    $out .= "<td>to lat;lon: <font color='green'>$col;$value</font></td>";
+    $out .= "<td>distance: <font color='blue'>$dist</font></td>";
+    syslog("info", "review position: $oldlat,$oldlon,$lat,$lon");
 
   } elsif ($action eq "deltag") {
     $out .= "<td> <h2>delete tags</h2></td>";
