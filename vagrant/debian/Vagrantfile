@@ -21,8 +21,8 @@ Vagrant.configure(2) do |config|
     # Install unpackaged perl modules
     frontend.vm.provision "shell", inline: <<-EOF
       (echo y;echo o conf prerequisites_policy follow;echo o conf commit)|sudo cpan
-      sudo cpanm install 'Geo::JSON'
-      sudo cpanm install 'Geo::Inverse'
+      sudo cpanm 'Geo::JSON'
+      sudo cpanm 'Geo::Inverse'
     EOF
 
 
@@ -31,13 +31,15 @@ Vagrant.configure(2) do |config|
       cd /
       sudo mkdir /var/www/api
       sudo chmod 770 /var/www/api
-      sudo chown www-data:www-data /var/www/api
       sudo usermod -a -G www-data vagrant
       cd /var/www/
       git clone https://github.com/osmcz/api
       cd /var/www/api
+      echo guidepost >> .gitignore
+      echo commons >> .gitignore
       rm img
       mkdir img
+      sudo chown -R www-data:www-data /var/www/api
     EOF
 
     # update apache config
