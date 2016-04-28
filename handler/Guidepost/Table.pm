@@ -27,6 +27,7 @@ use Apache2::Connection ();
 use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
 use Apache2::Filter ();
 use Apache2::Reload;
+use Apache2::Request;
 use Apache2::RequestIO ();
 use Apache2::RequestRec ();
 use Apache2::URI ();
@@ -61,7 +62,9 @@ use Encode;
 use Net::Subnet;
 use Image::ExifTool;
 use LWP::Simple;
+
 use Geo::Inverse;
+use Geo::Distance;
 
 my $dbh;
 my $BBOX = 0;
@@ -82,6 +85,10 @@ sub handler
   $LIMIT = 0;
 
   $r = shift;
+
+#  $r = Apache2::Request->new(shift,
+#                               POST_MAX => 10 * 1024 * 1024, # in bytes, so 10M
+#                               DISABLE_UPLOADS => 0);
 
   $dbpath = $r->dir_config("dbpath");
 
@@ -207,7 +214,11 @@ sub handler
     &robot();
   } elsif ($uri =~ "/table/ping") {
     $r->print("pong");
+  } else {
+    syslog('info', "unknown request: $uri");
+    $error_result = 400;
   }
+
 #Dumper(\%ENV);
 #    connection_info($r->connection);
 #    $r->send_http_header;   # Now send the http headers.
