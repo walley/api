@@ -326,6 +326,7 @@ sub check_ban()
   my $banned = subnet_matcher qw(
     66.249.69.0/24
     66.249.64.0/24
+    66.249.64.0/19
   );
 #doubrava  185.93.61.0/24
   return ($banned->($remote_ip));
@@ -346,6 +347,13 @@ sub check_privileged_access()
     syslog('info', 'privileged access denied:' . $remote_ip);
     return 0;
   }
+}
+
+################################################################################
+sub authorized()
+################################################################################
+{
+  return &check_privileged_access();
 }
 
 ################################################################################
@@ -570,7 +578,7 @@ sub output_data
   my ($query) = @_;
   my $ret;
 
-  syslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
+#  syslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
 
   if ($OUTPUT_FORMAT eq "html") {
     $ret = output_html($query);
@@ -1084,7 +1092,8 @@ sub gp_line()
   });";
   }
 
-    $out .= "
+    if (&check_privileged_access()) {
+      $out .= "
   var text = \"" . &delete_button() . "\";
   \$.ajax({
     url: 'http://api.openstreetmap.cz/table/isdeleted/" . $id . "',
@@ -1102,6 +1111,7 @@ sub gp_line()
   })
   .always(function(data) {
   });";
+    }
 
   $out .= "  </script>";
 
@@ -1252,7 +1262,10 @@ sub set_by_id()
   if (!$res) {
     syslog("info", "set_by_id($id, $val): dbi error " . $DBI::errstr);
     $error_result = 500;
+  } else {
+    &auto_approve();
   }
+
 }
 
 
@@ -1271,7 +1284,10 @@ sub move_photo()
   if (!$res) {
     syslog("info", "move_photo($id, $lat, $lon): dbi error " . $DBI::errstr);
     $error_result = 500;
+  } else {
+    &auto_approve();
   }
+
 }
 
 ################################################################################
@@ -1635,7 +1651,10 @@ sub remove
     syslog("info", "remove db error " . $DBI::errstr . " $query");
     $error_result = 500;
     return;
+  } else {
+    &auto_approve();
   }
+
 }
 
 ################################################################################
@@ -1700,6 +1719,14 @@ sub get_tags()
 }
 
 ################################################################################
+sub auto_approve()
+################################################################################
+{
+  my $last_id = $dbh->sqlite_last_insert_rowid();
+  syslog("info", "change id for autoapprove:" . $last_id);
+}
+
+################################################################################
 sub add_tags()
 ################################################################################
 {
@@ -1713,7 +1740,7 @@ sub add_tags()
 
   $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'addtag')";
 
-  syslog("info", "add_tags($tag):" . $query);
+#  syslog("info", "add_tags($tag):" . $query);
   syslog('info', $remote_ip . " wants to add tag ($k:$v) for id:$id");
 
   my $sth = $dbh->prepare($query);
@@ -1722,6 +1749,8 @@ sub add_tags()
   if (!$res) {
     syslog("info", "add_tags($tag): dbi error " . $DBI::errstr);
     $error_result = 500;
+  } else {
+    &auto_approve();
   }
 
 }
@@ -1748,6 +1777,10 @@ sub delete_tags()
   if (!$res) {
     syslog("info", "add_tags($tag): dbi error " . $DBI::errstr);
     $error_result = 500;
+  } else {
+    if (&privileged_access()) {
+      &auto_approve();
+    }
   }
 }
 
