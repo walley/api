@@ -281,7 +281,7 @@ sub error_404()
 <title>404 Not Found</title>
 </head><body>
 <h1>Not Found</h1>
-<p>We don\'t know nothing about this</p>
+<p>We know nothing about this</p>
 <hr>
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
 </body></html>
@@ -1644,6 +1644,14 @@ sub remove
 {
   my ($id) = @_;
   syslog('info', $remote_ip . " wants to remove $id");
+
+  if (!&check_privileged_access()) {
+    syslog('info', $remote_ip . " was denied the right to remove $id");
+     $error_result = 401;
+     return;
+  }
+
+  syslog('info', $remote_ip . " wants to remove $id");
   $query = "insert into changes (gp_id, action) values ($id, 'remove')";
   my $sth = $dbh->prepare($query);
   my $res = $sth->execute();
@@ -1859,16 +1867,15 @@ sub robot()
 
   foreach my $row (@$res) {
     my ($id, $gp_id, $col, $value, $action) = @$row;
-    syslog('info', "robot row: ($id, $gp_id, $col, $value, $action)");
+#    syslog('info', "robot row: ($id, $gp_id, $col, $value, $action)");
     if ($action eq "addtag") {
       my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
       syslog('info', "robot: get $url");
       my $content = get($url);
-#      my $content = get("http://api.openstreetmap.cz/table/ping");
       syslog('info', "robot: " . $content);
       $r->print("returned $content");
     } else {
-      syslog('info', "no robot");
+#      syslog('info', "no robot");
     }
   }
 }
