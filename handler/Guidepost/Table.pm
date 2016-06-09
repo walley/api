@@ -340,6 +340,9 @@ sub check_privileged_access()
     185.93.61.1/32
     195.113.123.0/24
     31.31.78.232/32
+
+    62.141.23.8/32
+    46.135.14.8/32
   );
   if ($ok->($remote_ip)) {
     return 1;
@@ -1827,7 +1830,7 @@ sub exif()
   }
 
   if ($OUTPUT_FORMAT eq "geojson" or $OUTPUT_FORMAT eq "kml") {
-  #Bad Request
+    #Bad Request
     $error_result = 400;
     return;
   } elsif ($OUTPUT_FORMAT eq "html") {
@@ -1867,13 +1870,23 @@ sub robot()
 
   foreach my $row (@$res) {
     my ($id, $gp_id, $col, $value, $action) = @$row;
-#    syslog('info', "robot row: ($id, $gp_id, $col, $value, $action)");
     if ($action eq "addtag") {
+      syslog('info', "robot added tag: ($id, $gp_id, $col, $value, $action)");
       my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
       syslog('info', "robot: get $url");
       my $content = get($url);
       syslog('info', "robot: " . $content);
-      $r->print("returned $content");
+      $r->print("addtag returned $content ");
+    } elsif ($action eq "edit") {
+       my $old_value = get_gp_column_value($gp_id, $col);
+       if ($old_value eq "" or $old_value eq "none") {
+         syslog('info', "robot adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
+         my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+         my $content = get($url);
+         $r->print("edit returned $content ");
+       } else {
+         syslog('info', "robot NOT adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
+       }
     } else {
 #      syslog('info', "no robot");
     }
