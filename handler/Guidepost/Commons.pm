@@ -98,7 +98,7 @@ sub parse_query_string
     } else {
       $get_args{$_} =~ s/[^A-Za-z0-9 ]//g;
     }
-    syslog('info', "getdata " . $_ . "=" . $get_args{$_});
+    #syslog('info', "getdata " . $_ . "=" . $get_args{$_});
   }
 }
 
@@ -128,6 +128,8 @@ sub output_geojson
     $query .= " where lat < $maxlat and lat > $minlat and lon < $maxlon and lon > $minlon";
   }
 
+  #syslog('info', "commons query " . $query);
+
   my $pt;
   my $ft;
   my @feature_objects;
@@ -135,11 +137,15 @@ sub output_geojson
   my $a;
 
   my $dbh = DBI->connect(
-    "dbi:SQLite:$dbpath/commons", "", "", {
-       RaiseError     => 1,
-       sqlite_unicode => 1,
-    }
+      "dbi:SQLite:$dbpath/commons", "", "",
+      {
+          RaiseError     => 1,
+          sqlite_unicode => 1,
+      }
   );
+
+#  my $sql = qq{SET NAMES 'utf8';};
+#  $dbh->do($sql);
 
   $res = $dbh->selectall_arrayref($query);
   print $DBI::errstr;

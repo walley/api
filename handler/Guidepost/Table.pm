@@ -146,8 +146,7 @@ sub handler
   $error_result = Apache2::Const::OK;
 
   my $api_request = $uri_components[2];
-  syslog('info', "request $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT);
-
+  syslog('info', "request from $remote_ip: $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT);
 
   if ($uri =~ "table\/all") {
     &output_all();
