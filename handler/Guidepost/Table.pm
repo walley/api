@@ -76,6 +76,7 @@ my $maxlat;
 my $error_result;
 my $remote_ip;
 my $dbpath;
+my $user;
 
 ################################################################################
 sub handler
@@ -92,11 +93,13 @@ sub handler
 
   $dbpath = $r->dir_config("dbpath");
 
-  if( $r->connection->can( 'remote_ip' ) ) {
+  if ($r->connection->can('remote_ip')) {
     $remote_ip = $r->connection->remote_ip
   } else {
     $remote_ip = $r->useragent_ip;
   }
+
+  $user = $ENV{REMOTE_USER};
 
   openlog('guidepostapi', 'cons,pid', 'user');
 
@@ -146,59 +149,65 @@ sub handler
   $error_result = Apache2::Const::OK;
 
   my $api_request = $uri_components[2];
-  syslog('info', "request from $remote_ip: $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT);
+  $api_version = $uri_components[1];
 
-  if ($uri =~ "table\/all") {
+  if ($user eq "") {
+    $user = "anon.openstreetmap.cz";
+  }
+
+  syslog('info', "request from $remote_ip by $user ver. $api_version: $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT);
+
+  if ($api_request eq  "all") {
     &output_all();
-  } elsif ($uri =~ /goodbye/) {
+  } elsif ($api_request eq "goodbye") {
     &say_goodbye($r);
-  } elsif ($uri =~ "/table/count") {
+  } elsif ($api_request eq "count") {
     print &get_gp_count();
-  } elsif ($uri =~ "/table/get") {
+  } elsif ($api_request eq "get") {
     &table_get($uri_components[3], $uri_components[4]);
-  } elsif ($uri =~ "/table/leaderboard") {
+  } elsif ($api_request eq "leaderboard") {
     &leaderboard();
-  } elsif ($uri =~ "/table/ref") {
+  } elsif ($api_request eq "ref") {
     my $joined_ref = substr(join('/', @uri_components[3 .. scalar @uri_components]), 0, -1);
     &show_by_ref($joined_ref);
-  } elsif ($uri =~ "/table/id") {
+  } elsif ($api_request eq "id") {
     &show_by_id($uri_components[3]);
-  } elsif ($uri =~ "/table/name") {
+  } elsif ($api_request eq "name") {
     &show_by_name($uri_components[3]);
-  } elsif ($uri =~ "/table/note") {
+  } elsif ($api_request eq "note") {
     &show_by($uri_components[3],"note");
-  } elsif ($uri =~ "/table/setbyid") {
+  } elsif ($api_request eq "setbyid") {
     &set_by_id($post_data{id}, $post_data{value});
-  } elsif ($uri =~ "/table/move") {
+  } elsif ($api_request eq "move") {
     &move_photo($post_data{id}, $post_data{lat}, $post_data{lon});
-  } elsif ($uri =~ "isedited") {
+  } elsif ($api_request eq "isedited") {
     #/isedited/ref/id
     &is_edited($uri_components[3], $uri_components[4]);
-  } elsif ($uri =~ "isdeleted") {
+  } elsif ($api_request eq "isdeleted") {
     &is_deleted($uri_components[3]);
-  } elsif ($uri =~ "/table/approve") {
+  } elsif ($api_request eq "approve") {
     &approve_edit($uri_components[3]);
-  } elsif ($uri =~ "/table/reject") {
+  } elsif ($api_request eq "reject") {
     &reject_edit($uri_components[3]);
-  } elsif ($uri =~ "/table/review") {
+  } elsif ($api_request eq "review") {
     &review_form();
-  } elsif ($uri =~ "/table/delete") {
+  } elsif ($api_request eq "delete") {
     &delete_id($uri_components[3]);
-  } elsif ($uri =~ "/table/remove") {
+  } elsif ($api_request eq "remove") {
     &remove($uri_components[3]);
-  } elsif ($uri =~ "/table/close") {
+  } elsif ($api_request eq "close") {
 #default output must be geojson
 #params: $get_data{lat}, $get_data{lon}, $get_data{distance}, $get_data{limit}
     &get_nearby($get_data{lat}, $get_data{lon}, $get_data{distance}, $get_data{limit});
-  } elsif ($uri =~ "/table/tags/delete") {
+  } elsif ($api_request eq "tags/delete") {
     &delete_tags($uri_components[4], $uri_components[5]);
-  } elsif ($uri =~ "/table/hashtag") {
+  } elsif ($api_request eq "hashtag") {
     #tag search
     &hashtag($uri_components[3]);
-  } elsif ($uri =~ "/table/tags/add") {
+  } elsif ($api_request eq "tags/add") {
     #id,val
     &add_tags($uri_components[4], $uri_components[5]);
-  } elsif ($uri =~ "/table/tags") {
+  } elsif ($api_request eq "tags") {
     if ($r->method() eq "GET") {
       my $out = &get_tags($uri_components[3]);
       $r->print($out);
@@ -207,12 +216,18 @@ sub handler
     } elsif ($r->method() eq "POST") {
       &add_tags($post_data{id}, $post_data{tag});
     }
-  } elsif ($uri =~ "/table/exif") {
+  } elsif ($api_request eq "exif") {
     &exif($uri_components[3]);
-  } elsif ($uri =~ "/table/robot") {
+  } elsif ($api_request eq "robot") {
     &robot();
-  } elsif ($uri =~ "/table/ping") {
+  } elsif ($api_request eq "ping") {
     $r->print("pong");
+  } elsif ($api_request eq "authcheck") {
+    if (&authorized()) {
+      $r->print("$user is ok");
+    } else {
+      $r->print("go away $user");
+    }
   } else {
     syslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -326,6 +341,10 @@ sub check_ban()
     66.249.69.0/24
     66.249.64.0/24
     66.249.64.0/19
+    151.80.31.102/32
+    157.60.0.0/16
+    157.56.0.0/14
+    157.54.0.0/15
   );
 #doubrava  185.93.61.0/24
   return ($banned->($remote_ip));
@@ -355,7 +374,13 @@ sub check_privileged_access()
 sub authorized()
 ################################################################################
 {
-  return &check_privileged_access();
+#  return &check_privileged_access();
+
+  my @ok_users = (
+    "https://walley.mojeid.cz/#p8sRbfdmZu"
+  );
+
+  return ($user ~~ @ok_users);
 }
 
 ################################################################################
@@ -1570,7 +1595,7 @@ sub approve_edit
 {
   my ($id) = @_;
 
-  if (!&check_privileged_access()) {
+  if (!&check_privileged_access() and !&authorized()) {
     $error_result = 401;
     return;
   }
@@ -1662,7 +1687,7 @@ sub remove
     $error_result = 500;
     return;
   } else {
-    &auto_approve();
+    if (&check_privileged_access()) {&auto_approve();}
   }
 
 }
@@ -1713,18 +1738,20 @@ sub get_tags()
     return $out;
   }
 
-  syslog("info", "get_tags($id):" . $query);
+#  syslog("info", "get_tags($id):" . $query);
 
   my $i = 0;
   foreach my $row (@$res) {
     $out_array[$i++] .= @$row[2] . ":" . @$row[3];
 #    syslog("info", "get_tags array" . $out_array[$i-1] );
   }
+
   if ($OUTPUT_FORMAT eq "json"){
     $out = encode_json(\@out_array);
   } else {
     $out .= join(";", @out_array);
   }
+
   return $out;
 }
 
@@ -1734,6 +1761,7 @@ sub auto_approve()
 {
   my $last_id = $dbh->sqlite_last_insert_rowid();
   syslog("info", "change id for autoapprove:" . $last_id);
+  &approve_edit($last_id);
 }
 
 ################################################################################
@@ -1788,9 +1816,7 @@ sub delete_tags()
     syslog("info", "add_tags($tag): dbi error " . $DBI::errstr);
     $error_result = 500;
   } else {
-    if (&privileged_access()) {
-      &auto_approve();
-    }
+    if (&check_privileged_access()) {&auto_approve();}
   }
 }
 
