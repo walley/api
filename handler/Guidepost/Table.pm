@@ -220,6 +220,8 @@ sub handler
     &exif($uri_components[3]);
   } elsif ($api_request eq "robot") {
     &robot();
+  } elsif ($api_request eq "login") {
+    $r->print("tgis will log you in and send you back to editor ");
   } elsif ($api_request eq "ping") {
     $r->print("pong");
   } elsif ($api_request eq "authcheck") {
@@ -377,10 +379,16 @@ sub authorized()
 #  return &check_privileged_access();
 
   my @ok_users = (
-    "https://walley.mojeid.cz/#p8sRbfdmZu"
+    "https://walley.mojeid.cz/#p8sRbfdmZu",
+    "https://mkyral.mojeid.cz/#0gQJXul3eXh1",
   );
 
-  return ($user ~~ @ok_users);
+  my $is_ok = ($user ~~ @ok_users);
+  my $ok = ($is_ok) ? "ok" : "bad";
+
+  syslog('info', "authorized(): " . $user . " is " . $ok . " from " . $remote_ip);
+
+  return $is_ok;
 }
 
 ################################################################################
@@ -816,7 +824,7 @@ sub leaderboard
   $out .= &page_header();
   $out .= "<h1>Leaderboard</h1>";
 
-  my $query = "select attribution, count (*) as num from guidepost group by attribution order by num desc";
+  my $query = "select attribution, count (*) as num from guidepost group by attribution COLLATE NOCASE order by num desc ";
   my $pos = 1;
 
   $res = $dbh->selectall_arrayref($query);
@@ -1595,7 +1603,11 @@ sub approve_edit
 {
   my ($id) = @_;
 
-  if (!&check_privileged_access() and !&authorized()) {
+  if (&check_privileged_access()) {
+    syslog('info', "approving because of privileged_access");
+  } elsif (&authorized()) {
+    syslog('info', "approving because authorized");
+  } else {
     $error_result = 401;
     return;
   }
