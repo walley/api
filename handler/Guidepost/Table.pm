@@ -667,13 +667,14 @@ sub output_html
   my ($query) = @_;
 
 #<link rel="stylesheet" href="https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css">
+# TODO: I did not find minified version on https of "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
     @s = (
-      "http://code.jquery.com/jquery-1.11.3.min.js",
-      "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
-      "http://api.openstreetmap.cz/wheelzoom.js",
+      "https://code.jquery.com/jquery-1.11.3.min.js",
+      "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
+      "https://api.openstreetmap.cz/wheelzoom.js",
       "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
       "https://goodies.pixabay.com/jquery/tag-editor/jquery.caret.min.js",
-      "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.js",
+      "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.js"
     );
     @l = (
       "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css"
@@ -851,7 +852,7 @@ sub leaderboard
 sub init_inplace_edit()
 ################################################################################
 {
-  my $url = "http://api.openstreetmap.cz/table/setbyid";
+  my $url = "https://api.openstreetmap.cz/table/setbyid";
   my $out = "";
 
   $out .= "<script>\n";
@@ -892,9 +893,9 @@ sub maplinks()
   $out .=  "<li><a href='http://www.openstreetmap.cz/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.cz</a>";
   $out .=  "<li><a href='http://www.openstreetmap.org/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>OSM</a>";
   $out .=  "<li><a href='https://maps.google.com/maps?ll=$lat,$lon&q=loc:$lat,$lon&hl=en&t=m&z=16'>Google</a>";
-  $out .=  "<li><a href='http://www.bing.com/maps/?v=2&cp=$lat~$lon&style=r&lvl=16'>Bing</a>";
-  $out .=  "<li><a href='http://www.mapy.cz/?st=search&fr=loc:".$lat."N ".$lon."E'>Mapy.cz</a>";
-  $out .=  "<li><a href='http://mapy.idnes.cz/#pos=".$lat."P".$lon."P13'>idnes.cz</a>";
+  $out .=  "<li><a href='https://www.bing.com/maps/?v=2&cp=$lat~$lon&style=r&lvl=16'>Bing</a>";
+  $out .=  "<li><a href='https://www.mapy.cz/?st=search&fr=loc:".$lat."N ".$lon."E'>Mapy.cz</a>";
+  $out .=  "<li><a href='https://mapy.idnes.cz/#pos=".$lat."P".$lon."P13'>idnes.cz</a>";
   $out .=  "</ul>\n";
   $out .=  "</span>\n";
 
@@ -910,7 +911,7 @@ sub static_map()
   my ($lat, $lon) = @_;
   my $out = "<!-- static map -->";
 
-  $static_map = "http://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$lat,$lon&zoom=15&size=200,200&type=map&imagetype=png&pois=x,$lat,$lon";
+  $static_map = "https://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$lat,$lon&zoom=15&size=200,200&type=map&imagetype=png&pois=x,$lat,$lon";
 #  $out .=  "<img src='http://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lon&zoom=14&size=200x200&maptype=mapnik&markers=$lat,$lon,lightblue1' />";
 
 #  $out .=  "<span class='staticmap'>\n";
@@ -928,7 +929,7 @@ sub delete_button
 {
   my $ret = "";
   $ret .= "<span title='" . &t("remove_picture") ."'>";
-  $ret .= "delete <img src='http://api.openstreetmap.cz/img/delete.png' width=16 height=16>";
+  $ret .= "delete <img src='https://api.openstreetmap.cz/img/delete.png' width=16 height=16>";
   $ret .= "</span>";
   return $ret;
 }
@@ -961,7 +962,7 @@ sub id_stuff
   <script>
   \$('#remove$id').click(function() {
     \$.ajax({
-       url: 'http://api.openstreetmap.cz/table/remove/$id',
+       url: 'https://api.openstreetmap.cz/table/remove/$id',
     }).done(function() {
       \$('#remove$id').html('marked for deletion')
     });
@@ -1114,7 +1115,7 @@ sub gp_line()
   foreach $col (@attrs) {
     $out .= "
   \$.ajax({
-    url: 'http://api.openstreetmap.cz/table/isedited/". $col ."/" . $id . "',
+    url: 'https://api.openstreetmap.cz/table/isedited/". $col ."/" . $id . "',
     timeout:3000
   })
   .done(function(data) {
@@ -1131,7 +1132,7 @@ sub gp_line()
       $out .= "
   var text = \"" . &delete_button() . "\";
   \$.ajax({
-    url: 'http://api.openstreetmap.cz/table/isdeleted/" . $id . "',
+    url: 'https://api.openstreetmap.cz/table/isdeleted/" . $id . "',
     timeout:3000
   })
   .done(function(data) {
@@ -1160,7 +1161,7 @@ sub gp_line()
 
 
   $out .= "<div class='Cell'>";
-  $full_uri = "http://api.openstreetmap.cz/".$url;
+  $full_uri = "https://api.openstreetmap.cz/".$url;
   $out .= "<a href='$full_uri'><img src='$full_uri' height='150px'><br>$name</a>";
   $out .= "</div>\n";
 
@@ -1183,7 +1184,7 @@ sub gp_line()
    beforeTagSave: function(field, editor, tags, tag, val) {
      \$.ajax({
       type: 'POST',
-      url: 'http://api.openstreetmap.cz/table/tags/',
+      url: 'https://api.openstreetmap.cz/table/tags/',
       data: 'id=" . $id . "&tag=' + val,
       timeout:3000
     })
@@ -1199,7 +1200,7 @@ sub gp_line()
 
    beforeTagDelete: function(field, editor, tags, val) {
      \$.ajax({
-      url: 'http://api.openstreetmap.cz/table/tags/delete/" . $id . "/' + val,
+      url: 'https://api.openstreetmap.cz/table/tags/delete/" . $id . "/' + val,
       timeout:3000
     })
     .done(function(data) {
@@ -1242,7 +1243,7 @@ sub page_header()
   <meta charset="utf-8">
   <meta http-equiv="cache-control" content="no-cache">
   <meta http-equiv="pragma" content="no-cache">
-  <link rel="stylesheet" type="text/css" href="http://api.openstreetmap.cz/editor.css">
+  <link rel="stylesheet" type="text/css" href="https://api.openstreetmap.cz/editor.css">
   <title>openstreetmap.cz guidepost editor</title>
 ';
 
@@ -1364,7 +1365,7 @@ sub review_entry
   $out .= "<tr>\n";
 
   $out .= "<td>change id:$id</td>";
-  $out .= "<td>guidepost id:<a href='http://api.openstreetmap.cz/table/id/$gp_id'>$gp_id</a></td>";
+  $out .= "<td>guidepost id:<a href='https://api.openstreetmap.cz/table/id/$gp_id'>$gp_id</a></td>";
 
   $out .= "</tr>\n";
   $out .= "<tr>\n";
@@ -1389,7 +1390,7 @@ sub review_entry
     my ($faz, $baz, $dist)=$obj->inverse($oldlat,$oldlon,$lat,$lon);
     my $dist = $obj->inverse($oldlat,$oldlon,$lat,$lon);
 
-    my $static_map = "http://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$oldlat,$oldlon&zoom=15&size=200,200&type=map&imagetype=png&pois=f,$oldlat,$oldlon|t,$lat,$lon";
+    my $static_map = "https://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$oldlat,$oldlon&zoom=15&size=200,200&type=map&imagetype=png&pois=f,$oldlat,$oldlon|t,$lat,$lon";
     $out .= "<td>\n";
     $out .=  "<img class='xzoom' src='".$static_map."'/>";
     $out .= "</td>\n";
@@ -1423,7 +1424,7 @@ sub review_entry
   $out .= "<table>";
   $out .= "<tr>";
   $out .= "<td>";
-  $out .= "<img align='bottom' id='wheelzoom$req_id' src='http://api.openstreetmap.cz/img/guidepost/$img' width='320' height='200' alt='mapic'>";
+  $out .= "<img align='bottom' id='wheelzoom$req_id' src='https://api.openstreetmap.cz/img/guidepost/$img' width='320' height='200' alt='mapic'>";
   $out .= "</td>";
   $out .= "<td>";
   $out .= "<button style='height:200px;width:200px' onclick='javascript:reject(".$id."," . $req_id . ")' > reject </button>";
@@ -1471,14 +1472,14 @@ sub review_form
   $res = $dbh->selectall_arrayref($query);
   $out .= $DBI::errstr;
 
-  my @a = ("http://code.jquery.com/jquery-1.11.3.min.js", "http://api.openstreetmap.cz/wheelzoom.js");
+  my @a = ("https://code.jquery.com/jquery-1.11.3.min.js", "https://api.openstreetmap.cz/wheelzoom.js");
   $out .= &page_header(\@a);
 
   $out .= "<script>";
   $out .= "
 function approve(id,divid)
 {
-  \$.ajax( 'http://api.openstreetmap.cz/table/approve/' + id, function(data) {
+  \$.ajax( 'https://api.openstreetmap.cz/table/approve/' + id, function(data) {
     alert( 'Load was performed.' + data );
   })
   .done(function() {
@@ -1493,7 +1494,7 @@ function approve(id,divid)
 
 function reject(id,divid)
 {
-  \$.ajax( 'http://api.openstreetmap.cz/table/reject/' + id, function(data) {
+  \$.ajax( 'https://api.openstreetmap.cz/table/reject/' + id, function(data) {
     alert( 'Load was performed.'+data );
   })
   .done(function() {
@@ -1909,7 +1910,7 @@ sub robot()
     my ($id, $gp_id, $col, $value, $action) = @$row;
     if ($action eq "addtag") {
       syslog('info', "robot added tag: ($id, $gp_id, $col, $value, $action)");
-      my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+      my $url = "https://api.openstreetmap.cz/table/approve/" . $id;
       syslog('info', "robot: get $url");
       my $content = get($url);
       syslog('info', "robot: " . $content);
@@ -1918,7 +1919,7 @@ sub robot()
        my $old_value = get_gp_column_value($gp_id, $col);
        if ($old_value eq "" or $old_value eq "none") {
          syslog('info', "robot adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
-         my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+         my $url = "https://api.openstreetmap.cz/table/approve/" . $id;
          my $content = get($url);
          $r->print("edit returned $content ");
        } else {
