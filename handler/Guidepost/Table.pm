@@ -670,7 +670,7 @@ sub output_html
 # TODO: I did not find minified version on https of "http://www.appelsiini.net/download/jquery.jeditable.mini.js",
     @s = (
       "https://code.jquery.com/jquery-1.11.3.min.js",
-      "https://api.openstreetmap.cz/jquery.jeditable.mini.js",
+      "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
       "https://api.openstreetmap.cz/wheelzoom.js",
       "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
       "https://goodies.pixabay.com/jquery/tag-editor/jquery.caret.min.js",
