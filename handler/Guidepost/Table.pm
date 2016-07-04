@@ -1324,17 +1324,19 @@ sub move_photo()
 {
   my ($id, $lat, $lon) = @_;
 
-  $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
+  my $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
   $old_lat = &get_gp_column_value($id, "lat");
   $old_lon = &get_gp_column_value($id, "lon");
   syslog('info', $remote_ip . " wants to move id:$id, from $old_lat, $old_lon to '$lat', '$lon'");
+  syslog('info', $remote_ip . $query);
 
   my $res = $dbh->do($query, undef, $id, $lat, $lon);
 
-  if (!$res) {
+  if ($res < 1) {
     syslog("info", "move_photo($id, $lat, $lon): dbi error " . $DBI::errstr);
     $error_result = 500;
   } else {
+    syslog("info", "move_photo($id, $lat, $lon): done");
     &auto_approve();
   }
 
