@@ -69,6 +69,7 @@ use Geo::Distance;
 my $dbh;
 my $BBOX = 0;
 my $LIMIT = 0;
+my $OFFSET = 0;
 my $minlon;
 my $minlat;
 my $maxlon;
@@ -84,6 +85,7 @@ sub handler
 {
   $BBOX = 0;
   $LIMIT = 0;
+  $OFFSET = 0;
 
   $r = shift;
 
@@ -120,6 +122,10 @@ sub handler
 
   if (exists $get_data{limit}) {
     $LIMIT = $get_data{limit};
+  }
+
+  if (exists $get_data{offset}) {
+    $OFFSET = $get_data{offset};
   }
 
   if (!exists $get_data{output} or $get_data{output} eq "html") {
@@ -333,9 +339,15 @@ sub output_all()
   if ($BBOX) {
     $query .= " where " . &add_bbox();
   }
+
   if ($LIMIT) {
     $query .= " limit " . $LIMIT;
   }
+
+  if ($OFFSET) {
+    $query .= " offset " . $OFFSET;
+  }
+
   &output_data($query);
 }
 
@@ -351,6 +363,7 @@ sub check_ban()
     157.60.0.0/16
     157.56.0.0/14
     157.54.0.0/15
+    91.232.82.106/32
   );
 #doubrava  185.93.61.0/24
   return ($banned->($remote_ip));
@@ -592,10 +605,18 @@ sub show_by
 
   syslog('info', "show_by($val, $what)");
 
-  my $query = "select * from guidepost where $what='$val'";
+  my $query = "select * from guidepost where $what='$val' ";
 
   if ($BBOX) {
     $query .= " and ".&add_bbox();
+  }
+
+  if ($LIMIT) {
+    $query .= " limit " . $LIMIT;
+  }
+
+  if ($OFFSET) {
+    $query .= " offset " . $OFFSET;
   }
 
   $error_result = &output_data($query);
