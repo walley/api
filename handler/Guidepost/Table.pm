@@ -200,19 +200,21 @@ sub handler
 #params: $get_data{lat}, $get_data{lon}, $get_data{distance}, $get_data{limit}
     &get_nearby($get_data{lat}, $get_data{lon}, $get_data{distance}, $get_data{limit});
   } elsif ($api_request eq "tags/delete") {
-    &delete_tags($uri_components[4], $uri_components[5]);
+# deprecated and not working anyway
+#    &delete_tags($uri_components[4], $uri_components[5]);
   } elsif ($api_request eq "hashtag") {
     #tag search
     &hashtag($uri_components[3]);
   } elsif ($api_request eq "tags/add") {
     #id,val
-    &add_tags($uri_components[4], $uri_components[5]);
+# deprecated and not working anyway
+#    &add_tags($uri_components[4], $uri_components[5]);
   } elsif ($api_request eq "tags") {
     if ($r->method() eq "GET") {
       my $out = &get_tags($uri_components[3]);
       $r->print($out);
     } elsif ($r->method() eq "DELETE") {
-      #&delete_tags($uri_components[4], $uri_components[5]);
+      &delete_tags($uri_components[3], $uri_components[4]);
     } elsif ($r->method() eq "POST") {
       &add_tags($post_data{id}, $post_data{tag});
     }
@@ -1213,7 +1215,8 @@ sub gp_line()
 
    beforeTagDelete: function(field, editor, tags, val) {
      \$.ajax({
-      url: '" . $https . "://api.openstreetmap.cz/" . $api_version . "/tags/delete/" . $id . "/' + val,
+      url: '" . $https . "://api.openstreetmap.cz/" . $api_version . "/tags/" . $id . "/' + val,
+      type: 'DELETE',
       timeout:3000
     })
     .done(function(data) {
@@ -1762,7 +1765,7 @@ sub get_tags()
 
   my $res = $dbh->selectall_arrayref($query);
   if (!$res) {
-    syslog("info", "get_tags dberror " . $DBI::errstr . "q: $query");
+    syslog("info", "get_tags dberror " . $DBI::errstr . " q: $query");
     $out = "DB error";
     return $out;
   }
@@ -1829,12 +1832,12 @@ sub delete_tags()
   my ($id, $tag) = @_;
   my ($k, $v) = split(":", $tag);
 
-  if ($k eq"" and  $v eq "") {
+  if ($k eq "" and  $v eq "") {
     $error_result = 400;
     return;
   }
 
-  $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'deltag')";
+  my $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'deltag')";
   syslog("info", "delete_tags($tag):" . $query);
   syslog('info', $remote_ip . " wants to delete tag ($k:$v) for id:$id");
 
