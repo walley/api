@@ -726,6 +726,8 @@ sub output_html
     return Apache2::Const::NOT_FOUND;
   }
 
+  $out .= "<!-- user is $user -->\n";
+
   foreach my $row (@$res) {
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note) = @$row;
     $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note);
@@ -1143,6 +1145,7 @@ sub gp_line()
   @attrs= ("lat", "lon", "ref", "attribution", "note");
 
   my $https = "http";
+
   if ($api_version eq "openid") {
    $https = "https";
   }
@@ -1168,7 +1171,7 @@ sub gp_line()
       $out .= "
   var text = \"" . &delete_button() . "\";
   \$.ajax({
-    url: '" . $https . "://api.openstreetmap.cz/table/isdeleted/" . $id . "',
+    url: '" . $https . "://api.openstreetmap.cz/". $api_version . "/isdeleted/" . $id . "',
     timeout:3000
   })
   .done(function(data) {
@@ -1574,6 +1577,8 @@ sub is_edited
 ################################################################################
 {
   $out = "";
+
+  $r->content_type('text/plain; charset=utf-8');
 
   my ($what, $id) = @_;
   my $query = "select count() from changes where gp_id=$id and col='$what'";
