@@ -1,5 +1,5 @@
 #
-#   mod_perl handler, gudeposts, part of openstreetmap.cz
+#   mod_perl handler, guideposts, part of openstreetmap.cz
 #   Copyright (C) 2015, 2016 Michal Grezl
 #
 #   This program is free software; you can redistribute it and/or modify

@@ -1,5 +1,5 @@
 #
-#   mod_perl handler, gudeposts, part of openstreetmap.cz
+#   mod_perl handler, upload, part of openstreetmap.cz
 #   Copyright (C) 2015, 2016 Michal Grezl
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ use utf8;
 use JSON;
 
 use Apache2::Connection ();
-#use Apache2::Const -compile => qw(MODE_READBYTES);
 use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
 use Apache2::Filter ();
 use Apache2::Reload;
@@ -35,8 +34,7 @@ use Apache2::Upload;
 
 use APR::Brigade ();
 use APR::Bucket ();
-#use APR::Const    -compile => qw(SUCCESS BLOCK_READ);
-use APR::Const -compile => qw(URI_UNP_REVEALPASSWORD);
+use APR::Const -compile;
 use APR::URI ();
 use constant IOBUFSIZE => 8192;
 use APR::Request;
@@ -51,17 +49,12 @@ use Geo::JSON::Point;
 use Geo::JSON::Feature;
 use Geo::JSON::FeatureCollection;
 
-use Sys::Syslog;                        # all except setlogsock()
+use Sys::Syslog;
 use HTML::Entities;
 
 use File::Copy;
-#use Encode::decode_utf8();
 use Encode;
 
-#binmode STDIN, ':utf8';
-#binmode STDOUT, ':utf8';
-
-use Net::Subnet;
 use Image::ExifTool;
 use LWP::Simple;
 
@@ -97,38 +90,31 @@ sub handler
 
   $dbpath = $r->dir_config("dbpath");
 
-  openlog('test', 'cons,pid', 'user');
+  openlog('upload', 'pid', 'user');
 
   my $uri = $r->uri;      # what does the URI (URL) look like ?
   $r->no_cache(1);
 
-  $api_version = (split("/", $r->uri))[1];
-
   $r->content_type('text/html; charset=utf-8');
-  $r->print($r->uri);
-  $r->print($api_version);
 
-    $r->content_type('application/json');
-    $r->print(&y());
-    return Apache2::Const::OK;
+  syslog("info", "uri:".$r->uri);
+
+  if ($uri =~ "phase1") {
+    $r->print(&phase1());
   }
 
-  if ($uri =~ "test/f") {
-    $r->content_type('text/html; charset=utf-8');
+  if ($uri =~ "form") {
     &form();
-    return Apache2::Const::OK;
   }
 
-  if ($uri =~ "/info") {
-    $r->content_type('text/html; charset=utf-8');
+  if ($uri =~ "info") {
     &i();
   }
 
-  if ($uri =~ $api_version."/login") {
-    $r->content_type('text/html; charset=utf-8');
-    $r->print("<h1>login</h1>");
-    &i();
+  if ($uri =~ "phase2") {
   }
+
+  closelog();
 
   return Apache2::Const::OK;
 }
@@ -146,7 +132,7 @@ sub form
 EOF
 }
 
-sub y
+sub phase1
 {
   my $req1 = Apache2::Request->new($r) or die;
   my $d = Dumper(\$req1);
@@ -194,7 +180,7 @@ sub y
 }
 
 ################################################################################
-sub exif()
+sub exif
 ################################################################################
 {
   my $image_location = "/home/walley/www/mapy/img/guidepost";
@@ -253,6 +239,5 @@ sub phase2()
 #create db entry
 
 }
-
 
 1;
