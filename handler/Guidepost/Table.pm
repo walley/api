@@ -935,12 +935,14 @@ sub maplinks()
   $out .=  "<span>\n";
   $out .=  "<ul>\n";
 #  $out .=  "<li><a href='http://maps.yahoo.com/#mvt=m&lat=$lat&lon=$lon&mag=6&q1=$lat,$lon'>Yahoo</a>";
-  $out .=  "<li><a href='http://www.openstreetmap.cz/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.cz</a>";
-  $out .=  "<li><a href='http://www.openstreetmap.org/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>OSM</a>";
+  $out .=  "<li><a href='https://www.openstreetmap.cz/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.cz</a>";
+  $out .=  "<li><a href='https://www.openstreetmap.org/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.org</a>";
+  $out .=  "<li><a href='https://mapy.cz/turisticka?x=$lon&y=$lat&z=18&source=coor&id=$lon%2C$lat'>Mapy.cz</a>";
   $out .=  "<li><a href='https://maps.google.com/maps?ll=$lat,$lon&q=loc:$lat,$lon&hl=en&t=m&z=16'>Google</a>";
   $out .=  "<li><a href='https://www.bing.com/maps/?v=2&cp=$lat~$lon&style=r&lvl=16'>Bing</a>";
-  $out .=  "<li><a href='https://www.mapy.cz/?st=search&fr=loc:".$lat."N ".$lon."E'>Mapy.cz</a>";
-  $out .=  "<li><a href='https://mapy.idnes.cz/#pos=".$lat."P".$lon."P13'>idnes.cz</a>";
+#  $out .=  "<li><a href='https://www.mapy.cz/?st=search&fr=loc:".$lat."N ".$lon."E'>Mapy.cz</a>";
+  $out .=  "<li><a href='http://mapy.idnes.cz/#pos=".$lat."P".$lon."P13'>idnes.cz</a>";
+  $out .=  "<li><a href='https://wego.here.com/?map=$lat,$lon,18,normal'>here.com</a>";
   $out .=  "</ul>\n";
   $out .=  "</span>\n";
 
