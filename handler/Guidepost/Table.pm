@@ -412,7 +412,8 @@ sub authorized()
     "https://mkyral.mojeid.cz/#0gQJXul3eXh1",
   );
 
-  my $is_ok = ($user ~~ @ok_users);
+#  my $is_ok = ($user ~~ @ok_users);
+  my $is_ok = ($user ne "");
   my $ok = ($is_ok) ? "ok" : "bad";
 
   syslog('info', "authorized(): " . $user . " is " . $ok . " from " . $remote_ip);
