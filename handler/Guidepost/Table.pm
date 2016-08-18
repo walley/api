@@ -413,7 +413,7 @@ sub authorized()
   );
 
 #  my $is_ok = ($user ~~ @ok_users);
-  my $is_ok = ($user ne "");
+  my $is_ok = ($user ne "" and $user ne "anon.openstreetmap.cz");
   my $ok = ($is_ok) ? "ok" : "bad";
 
   syslog('info', "authorized(): " . $user . " is " . $ok . " from " . $remote_ip);
