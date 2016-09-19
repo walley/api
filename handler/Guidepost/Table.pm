@@ -284,6 +284,8 @@ sub handler
 sub error_400()
 ################################################################################
 {
+  $r->content_type('text/html; charset=utf-8');
+
   $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>400 Bad request</title>
@@ -300,6 +302,8 @@ sub error_400()
 sub error_401()
 ################################################################################
 {
+  $r->content_type('text/html; charset=utf-8');
+
   $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>401 Unauthorized</title>
@@ -316,6 +320,8 @@ sub error_401()
 sub error_404()
 ################################################################################
 {
+  $r->content_type('text/html; charset=utf-8');
+
   $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>404 Not Found</title>
@@ -332,6 +338,8 @@ sub error_404()
 sub error_500()
 ################################################################################
 {
+  $r->content_type('text/html; charset=utf-8');
+
   $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>500 Boo Boo</title>
@@ -1530,7 +1538,7 @@ sub get_gp_column_value
 
   if (!$res) {
     syslog("info", "get_gp_column_value: dberror '" . $DBI::errstr . "' q: $query");
-    return "error";
+    return "error" . $DBI::errstr;
   }
 
   return @$res[0];
@@ -2062,10 +2070,11 @@ sub show_licenses()
     $r->print($out);
 
   } elsif ($OUTPUT_FORMAT eq "geojson") {
-    $r->print("N/A");
+    $error_result = 400;
   } elsif ($OUTPUT_FORMAT eq "json") {
     $r->print(encode_json(\%licenses));
   } elsif ($OUTPUT_FORMAT eq "kml") {
+    $error_result = 400;
   }
 
 }
