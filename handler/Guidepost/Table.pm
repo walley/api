@@ -2035,6 +2035,8 @@ sub notify()
 sub show_licenses()
 ################################################################################
 {
+  my $out = "";
+  my $i;
   my %licenses = ( 
     'CCBYSA4'=>'Creative Commons Attribution ShareAlike 4.0',
     'CCBYSA3'=>'Creative Commons Attribution ShareAlike 3.0',
@@ -2044,7 +2046,28 @@ sub show_licenses()
     'CC0'=>'Creative Commons CC0 Waiver',
     'C'=>'Zákon č. 121/2000 Sb.',
   );
-  $r->print(encode_json(\%licenses));
+
+  if ($OUTPUT_FORMAT eq "html") {
+    $out .= page_header();
+    $out .= "<h1>".&t("Known licenses")."</h1>\n";
+    $out .= "<table border='1'>\n";
+    foreach $i (keys %licenses) {
+      $out .= "<tr><td>";
+      $out .= $licenses{$i};
+      $out .= "</td></tr>\n";
+    }
+    $out .= "</table>\n";
+    $out .= page_footer();
+
+    $r->print($out);
+
+  } elsif ($OUTPUT_FORMAT eq "geojson") {
+    $r->print("N/A");
+  } elsif ($OUTPUT_FORMAT eq "json") {
+    $r->print(encode_json(\%licenses));
+  } elsif ($OUTPUT_FORMAT eq "kml") {
+  }
+
 }
 
 1;
