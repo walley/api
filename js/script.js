@@ -14,10 +14,11 @@ $(function(){
 
     add: function (e, data) {
 
-var image_info = "";
-image_info += "<p id='lat'>lat</p>";
-image_info += "<p id='lon'>lon</p>";
-image_info += "<p id='time'>time</p>";
+var image_info = "<h3>Info</h3>";
+image_info += "<div id='debug'>debug</div>";
+image_info += "<p>lat: <span id='lat'>xxx</span></p>";
+image_info += "<p>lon: <span id='lon'>xxx</span></p>";
+image_info += "<p>time: <spanid='time'>xxx</span></p>";
 
 var tpl_text = "";
 tpl_text += "<li class='working'>";
@@ -99,8 +100,9 @@ content += "<p>" + formatFileSize(data.files[0].size) + "</p>" + image_info;
       $('#lat').text(data.result.files[2].lat);
       $('#lon').text(data.result.files[2].lon);
       $('#time').text(data.result.files[2].time);
+      $('#debug').text(data.result);
 //      $('p').text(data.result.files[2].lat);
-//  alert(data.textStatus);
+  alert(data.textStatus);
   // data.jqXHR;
     }
 
