@@ -2045,14 +2045,24 @@ sub show_licenses()
 {
   my $out = "";
   my $i;
-  my %licenses = ( 
+  my %licenses = (
     'CCBYSA4'=>'Creative Commons Attribution ShareAlike 4.0',
     'CCBYSA3'=>'Creative Commons Attribution ShareAlike 3.0',
     'CCBY4'=>'Creative Commons Attribution 4.0',
     'CCBY3'=>'Creative Commons Attribution 3.0',
-    'CCBYSA2plus'=>'Creative Commons Attribution ShareAlike 2.0 or later ',
+    'CCBYSA2plus'=>'Creative Commons Attribution ShareAlike 2.0 or later',
     'CC0'=>'Creative Commons CC0 Waiver',
     'C'=>'Zákon č. 121/2000 Sb.',
+  );
+
+  my %license_sites = (
+    'CCBYSA4'=>'https://creativecommons.org/licenses/by-sa/4.0/',
+    'CCBYSA3'=>'https://creativecommons.org/licenses/by-sa/3.0/',
+    'CCBY4'=>'https://creativecommons.org/licenses/by/4.0/',
+    'CCBY3'=>'https://creativecommons.org/licenses/by/3.0/',
+    'CCBYSA2plus'=>'https://creativecommons.org/licenses/by-sa/2.0/',
+    'CC0'=>'https://creativecommons.org/choose/zero/',
+    'C'=>'https://portal.gov.cz/app/zakony/zakonPar.jsp?idBiblio=49278&nr=121~2F2000&rpp=15#local-content',
   );
 
   if ($OUTPUT_FORMAT eq "html") {
@@ -2072,7 +2082,8 @@ sub show_licenses()
   } elsif ($OUTPUT_FORMAT eq "geojson") {
     $error_result = 400;
   } elsif ($OUTPUT_FORMAT eq "json") {
-    $r->print(encode_json(\%licenses));
+    %out = ("licenses" => \%licenses, "sites" => \%license_sites);
+    $r->print(encode_json(\%out));
   } elsif ($OUTPUT_FORMAT eq "kml") {
     $error_result = 400;
   }
