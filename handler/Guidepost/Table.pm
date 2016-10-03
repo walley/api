@@ -23,8 +23,7 @@ use utf8;
 use JSON;
 
 use Apache2::Connection ();
-#use Apache2::Const -compile => qw(MODE_READBYTES);
-use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND);
+use Apache2::Const -compile => qw(OK SERVER_ERROR NOT_FOUND MODE_READBYTES);
 use Apache2::Filter ();
 use Apache2::Reload;
 use Apache2::Request;
@@ -34,8 +33,7 @@ use Apache2::URI ();
 
 use APR::Brigade ();
 use APR::Bucket ();
-#use APR::Const    -compile => qw(SUCCESS BLOCK_READ);
-use APR::Const -compile => qw(URI_UNP_REVEALPASSWORD);
+use APR::Const -compile => qw(URI_UNP_REVEALPASSWORD SUCCESS BLOCK_READ);
 use APR::URI ();
 use constant IOBUFSIZE => 8192;
 
@@ -49,7 +47,7 @@ use Geo::JSON::Point;
 use Geo::JSON::Feature;
 use Geo::JSON::FeatureCollection;
 
-use Sys::Syslog;                        # all except setlogsock()
+use Sys::Syslog;
 use HTML::Entities;
 
 use File::Copy;
@@ -113,7 +111,7 @@ sub handler
 
 #  syslog('info', 'start method:'. $r->method());
 
-  my $uri = $r->uri;      # what does the URI (URL) look like ?
+  my $uri = $r->uri;
 
   &parse_query_string($r);
   &parse_post_data($r);
@@ -2071,7 +2069,7 @@ sub show_licenses()
     $out .= "<table border='1'>\n";
     foreach $i (keys %licenses) {
       $out .= "<tr><td>";
-      $out .= $licenses{$i};
+      $out .= "<a href='".$license_sites{$i}."'>" . $licenses{$i} ."</a>";
       $out .= "</td></tr>\n";
     }
     $out .= "</table>\n";
