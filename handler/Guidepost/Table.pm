@@ -1864,6 +1864,24 @@ sub get_tags()
 }
 
 ################################################################################
+sub tag_exists()
+################################################################################
+{
+ my ($id, $k, $v) = @_;
+  my $query = "select * from tags where gp_id=$id and k='".$k."' and v='".$v."'";
+
+  my $res = $dbh->selectall_arrayref($query) or do {
+    syslog("info", "tag_exists  dberror " . $DBI::errstr . " q: $query");
+    return 1;
+  };
+
+  $count = scalar @{ $res };
+
+  syslog("info", "tag_exists q: $query c: $count");
+  return $count;
+}
+
+################################################################################
 sub auto_approve()
 ################################################################################
 {
@@ -1878,6 +1896,11 @@ sub add_tags()
 {
   my ($id, $tag) = @_;
   my ($k, $v) = split(":", $tag);
+
+  if (&tag_exists($id, $k, $v)) {
+    $error_result = 400;
+    return;
+  }
 
   if ($k eq "" and $v eq "") {
     $error_result = 400;
