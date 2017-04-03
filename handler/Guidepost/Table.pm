@@ -51,11 +51,7 @@ use Sys::Syslog;
 use HTML::Entities;
 
 use File::Copy;
-#use Encode::decode_utf8();
 use Encode;
-
-#binmode STDIN, ':utf8';
-#binmode STDOUT, ':utf8';
 
 use Net::Subnet;
 use Image::ExifTool;
