@@ -270,6 +270,7 @@ sub handler
     if ($error_result == 400) {error_400();}
     if ($error_result == 401) {error_401();}
     if ($error_result == 404) {error_404();}
+    if ($error_result == 412) {error_412();}
     if ($error_result == 500) {error_500();}
     $r->status($error_result);
   }
@@ -326,6 +327,24 @@ sub error_404()
 </head><body>
 <h1>Not Found</h1>
 <p>We know nothing about this</p>
+<hr>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+</body></html>
+');
+}
+
+################################################################################
+sub error_412()
+################################################################################
+{
+  $r->content_type('text/html; charset=utf-8');
+
+  $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>412 Precondition Failed</title>
+</head><body>
+<h1>FAAAAAAAAAAAAAIIIIIIIIIIIIIILLLLLLL!!!11</h1>
+<p>Do NOT fail our preconditions, not cool!</p>
 <hr>
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
 </body></html>
@@ -1413,22 +1432,27 @@ sub move_photo()
 {
   my ($id, $lat, $lon) = @_;
 
+  if (is_something($id, "position")) {
+    #already moved
+    syslog('info', $remote_ip . " wants to move id:$id again");
+    $error_result = 412;
+    return;
+  }
+
   my $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
   $old_lat = &get_gp_column_value($id, "lat");
   $old_lon = &get_gp_column_value($id, "lon");
   syslog('info', $remote_ip . " wants to move id:$id, from $old_lat, $old_lon to '$lat', '$lon'");
   syslog('info', $remote_ip . $query);
 
-  my $res = $dbh->do($query, undef, $id, $lat, $lon);
-
-  if ($res < 1) {
+  my $res = $dbh->do($query, undef, $id, $lat, $lon) or do {
     syslog("info", "500: move_photo($id, $lat, $lon): dbi error " . $DBI::errstr);
     $error_result = 500;
-  } else {
-    syslog("info", "move_photo($id, $lat, $lon): done");
-    &auto_approve();
-  }
+    return;
+  };
 
+  syslog("info", "move_photo($id, $lat, $lon): done");
+  &auto_approve();
 }
 
 ################################################################################
@@ -1664,7 +1688,7 @@ sub is_edited
 sub is_deleted
 ################################################################################
 {
-  my $out - "";
+  my $out = "";
 
   my ($id) = @_;
   my $query = "select count() from changes where gp_id=$id and action='remove'";
@@ -1676,6 +1700,19 @@ sub is_deleted
     $out = "";
   }
   $r->print($out);
+}
+
+################################################################################
+sub is_something
+################################################################################
+{
+  my $out = "";
+
+  my ($id, $action) = @_;
+  my $query = "select count() from changes where gp_id=$id and action='$action'";
+  my @ret = $dbh->selectrow_array($query);
+
+  return $ret[0];
 }
 
 ################################################################################
