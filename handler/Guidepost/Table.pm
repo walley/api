@@ -1060,6 +1060,7 @@ sub t()
   if ($s eq "marked for delete") {return "Označeno pro smazání";}
   if ($s eq "times") {return "krát";}
   if ($s eq "license") {return "licence";}
+  if ($s eq "Create date:") {return "Datum vytvoření:";}
 
 #  return  utf8::decode($s);
   return $s;
@@ -1190,6 +1191,8 @@ sub gp_line()
 
   $out .= "<br>" . &t("license") . ": $license";
   $out .= "<br> <a href='" . $https . "://api.openstreetmap.cz/" . $api_version . "/exif/" . $id . "'>" . &t("exif") ."</a>";
+
+  $out .= "<br> ". &t("Create date:") . &get_exif_data($id, "EXIF", "Create Date");
 
   $out .= "</div>";
 
@@ -1951,24 +1954,25 @@ sub delete_tags()
   }
 }
 
+################################################################################
 sub get_exif_data()
+################################################################################
 {
   my $image_location = "/home/walley/www/mapy/img/guidepost";
-  my ($id) = @_;
+  my ($id, $ret_group, $ret_tag) = @_;
   my $image_file = &get_gp_column_value($id, 'name');
   my $out = "";
   my $image = $image_location."/".$image_file;
 
-  syslog("info", "exif: " . $image);
+#  syslog("info", "exif: " . $image);
   my $exifTool = new Image::ExifTool;
   $exifTool->Options(Unknown => 1);
-  my $info = $exifTool->ImageInfo($image );
+  my $info = $exifTool->ImageInfo($image);
   my $group = '';
   my $tag;
   foreach $tag ($exifTool->GetFoundTags('Group0')) {
     if ($group ne $exifTool->GetGroup($tag)) {
       $group = $exifTool->GetGroup($tag);
-#      $out .= "---- $group ----\n";
     }
     my $val = $info->{$tag};
     if (ref $val eq 'SCALAR') {
@@ -1979,9 +1983,10 @@ sub get_exif_data()
         $val = "(Binary data $len bytes)";
       }
     }
-#    $out .= sprintf("%-32s : %s\n", $exifTool->GetDescription($tag), $val);
     $exifdata{$group}{$exifTool->GetDescription($tag)} = $val;
   }
+
+  return $exifdata{$ret_group}{$ret_tag};
 }
 
 ################################################################################
