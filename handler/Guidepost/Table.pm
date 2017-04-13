@@ -248,6 +248,8 @@ sub handler
     } else {
       $error_result = 400;
     }
+  } elsif ($api_request eq "sequence") {
+    &sequence($uri_components[3]);
   } else {
     syslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -363,6 +365,23 @@ sub error_500()
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
 </body></html>
 ');
+}
+
+################################################################################
+sub sequence()
+################################################################################
+{
+  my $seq = shift;
+  my $out = "<ul>";
+  for (my $i = 0; $i < 1000; $i++) {
+    $out .= "<li> $i: $seq$i ";
+    $out .= "<a href='http://api.openstreetmap.cz/table/ref/" . uc $seq . $i . "'>".$seq.$i."</a>";
+    if (&tag_query("ref",$seq.$i)) {
+    $out .= " - DB ";
+    }
+  }
+  $out .= "</ul>";
+  $r->print($out);
 }
 
 ################################################################################
@@ -1448,7 +1467,8 @@ sub move_photo()
   };
 
   syslog("info", "move_photo($id, $lat, $lon): done");
-  &auto_approve();
+
+  if (&check_privileged_access()) {&auto_approve();}
 }
 
 ################################################################################
@@ -1904,6 +1924,24 @@ sub get_tags()
 }
 
 ################################################################################
+sub tag_query()
+################################################################################
+{
+ my ($k, $v) = @_;
+  my $query = "select * from tags where k like '".$k."' and v like '".$v."'";
+
+  my $res = $dbh->selectall_arrayref($query) or do {
+    syslog("info", "tag_query  dberror " . $DBI::errstr . " q: $query");
+    return 1;
+  };
+
+  $count = scalar @{ $res };
+
+  syslog("info", "tag_query q: $query c: $count");
+  return $count;
+}
+
+################################################################################
 sub tag_exists()
 ################################################################################
 {
@@ -1937,12 +1975,12 @@ sub add_tags()
   my ($id, $tag) = @_;
   my ($k, $v) = split(":", $tag);
 
-  if (&tag_exists($id, $k, $v)) {
+  if ($id eq"" or $k eq "" and $v eq "") {
     $error_result = 400;
     return;
   }
 
-  if ($k eq "" and $v eq "") {
+  if (&tag_exists($id, $k, lc $v) or &tag_exists($id, $k, uc $v)) {
     $error_result = 400;
     return;
   }
