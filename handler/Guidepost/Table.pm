@@ -372,15 +372,21 @@ sub sequence()
 ################################################################################
 {
   my $seq = shift;
-  my $out = "<ul>";
+
+  my $out = &page_header();
+
+  $out .= "<ul>";
   for (my $i = 0; $i < 1000; $i++) {
     $out .= "<li> $i: $seq$i ";
-    $out .= "<a href='http://api.openstreetmap.cz/table/ref/" . uc $seq . $i . "'>".$seq.$i."</a>";
+    my $zeropadi = sprintf("%03d", $i);
+    $out .= "<a href='http://api.openstreetmap.cz/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
     if (&tag_query("ref",$seq.$i)) {
     $out .= " - DB ";
     }
   }
   $out .= "</ul>";
+  $out .= &page_footer();
+
   $r->print($out);
 }
 
@@ -1298,7 +1304,7 @@ sub gp_line()
   $out .= "<script>\n";
   $out .= "\$('#ta" . $id . "').tagEditor({
 
-   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka'] },
+   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka', 'memorial', 'eurodotace'] },
    placeholder: 'Vložte tagy ...',
    delimiter:';',
 
