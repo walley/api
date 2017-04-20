@@ -73,6 +73,9 @@ my $remote_ip;
 my $dbpath;
 my $user;
 
+my $api_request;
+my $api_param;
+
 ################################################################################
 sub handler
 ################################################################################
@@ -80,6 +83,9 @@ sub handler
   $BBOX = 0;
   $LIMIT = 0;
   $OFFSET = 0;
+
+  $api_request = "";
+  $api_param = "";
 
   $r = shift;
 
@@ -150,8 +156,9 @@ sub handler
 
   $error_result = Apache2::Const::OK;
 
-  my $api_request = $uri_components[2];
   $api_version = $uri_components[1];
+  $api_request = $uri_components[2];
+  $api_param = $uri_components[3];
 
   if ($user eq "") {
     $user = "anon.openstreetmap.cz";
@@ -784,6 +791,12 @@ sub output_html
     "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css"
   );
 
+  if ($is_https) {
+    $https = "https";
+  } else {
+    $https = "http";
+  }
+
   my $out = &page_header(\@s,\@l);
 
   $res = $dbh->selectall_arrayref($query) or do {
@@ -798,12 +811,34 @@ sub output_html
     return Apache2::Const::NOT_FOUND;
   }
 
+  if ($num_elements > 5 or $OFFSET or $LIMIT) {
+    $nextoffset = $OFFSET + 5;
+    $prevoffset = $OFFSET - 5;
+
+    if ($prevoffset < 0) {
+      $prevoffset = 0;
+    }
+
+    $prev = "$https://api.openstreetmap.cz/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset;
+    $next = "$https://api.openstreetmap.cz/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset;
+    $out .= "<a href='$prev'><- prev</a>";
+    $out .= " | ";
+    $out .= "<a href='$next'>next -></a><br>\n";
+  }
+
   $out .= "<!-- user is $user -->\n";
 
+#//aimplement some kind of all
+  my $counter = 0;
+
   foreach my $row (@$res) {
+    if ($counter > 4) {
+      last;
+    }
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license) = @$row;
     $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license);
     $out .= "\n";
+    $counter++;
   }
 
   $out .= "<script>wheelzoom(document.querySelectorAll('img'));</script>";
@@ -1167,17 +1202,17 @@ sub edit_stuff
   $out .= &show_table_row("latitude", $lat, $id, "lat");
   $out .= &show_table_row("longtitude", $lon, $id, "lon");
 
-  my $p1 = "<a title='" . &t("Click to show items containing") . " ref' href='/table/ref/" . $ref . "'>" . &t("ref") . "</a>:";
+  my $p1 = "<a title='" . &t("Click to show items containing") . " ref' href='/" . $api_version . "/ref/" . $ref . "'>" . &t("ref") . "</a>:";
   my $p2 = "<div class='edit' id='ref_$id'>" . $ref . "</div>";
   $out .= &show_table_row($p1, $p2, $id, "ref");
 
   $out .= &show_table_row(
-   "<a title='" . &t("Click to show items containing") . " name' href='/table/name/$attribution'>" . &t("by") . "</a>:",
+   "<a title='" . &t("Click to show items containing") . " name' href='/" . $api_version . "/name/$attribution'>" . &t("by") . "</a>:",
    "<div class='edit' id='attribution_$id'>$attribution</div>",
    $id, "attribution"
   );
   $out .= &show_table_row(
-   "<a title='" . &t("Click to show items containing") . " note' href='/table/note/$note'>" . &t("note") . "</a>:",
+   "<a title='" . &t("Click to show items containing") . " note' href='/" . $api_version . "/note/$note'>" . &t("note") . "</a>:",
    "<div class='edit' id='note_$id'>$note</div>",
    $id, "note"
   );
