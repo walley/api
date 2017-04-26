@@ -1,6 +1,6 @@
 #
 #   mod_perl handler, guideposts, part of openstreetmap.cz
-#   Copyright (C) 2015, 2016 Michal Grezl
+#   Copyright (C) 2015, 2016, 2017 Michal Grezl
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -443,13 +443,14 @@ sub check_privileged_access()
   my $ok = subnet_matcher qw(
     185.93.61.0/24
     185.93.60.0/22
-    195.113.123.0/24
+    195.113.123.32/28
     31.31.78.232/32
-
-    62.141.23.8/32
-    46.135.14.8/32
   );
+
+#tmobile    62.141.23.8/32
+#vodafone    46.135.14.8/32
   if ($ok->($remote_ip)) {
+    syslog('info', 'privileged access approved:' . $remote_ip);
     return 1;
   } else {
     syslog('info', 'privileged access denied:' . $remote_ip);
@@ -1079,10 +1080,23 @@ sub delete_button
 }
 
 ################################################################################
+sub report_illegal
+################################################################################
+{
+  my ($id) = @_;
+  my $ret = "";
+  $ret .= "<span title='" . &t("remove_picture") ."'>";
+  $ret .= "<img src='//api.openstreetmap.cz/img/delete.png' width=16 height=16>";
+  $ret .= "<a href='mailto:openstreetmap@openstreetmap.cz?Subject=osm%20photo%20" . $id . "%20is%20illegal' target='_top'>".&t("illegal")."</a>";
+  $ret .= "</span>";
+  return $ret;
+}
+
+################################################################################
 sub id_stuff
 ################################################################################
 {
-  ($id) = @_;
+  my ($id) = @_;
   my $ret = "<!-- is stuff -->";
   $ret .= "<div class='Table'>\n";
   $ret .= "<div class='Row'>\n";
@@ -1093,10 +1107,15 @@ sub id_stuff
   $ret .= "<div class='Row'>\n";
   $ret .= "<div class='Cell'>\n";
 
-  $ret .= "<div id='remove$id'>\n";
-  $ret .= &delete_button();
-  $ret .= "</div>";
-
+  if (&check_privileged_access()) {
+    $ret .= "<div id='remove$id'>\n";
+    $ret .= &delete_button();
+    $ret .= "</div>";
+  } else {
+    $ret .= "<div id='remove$id'>\n";
+    $ret .= &report_illegal($id);
+    $ret .= "</div>";
+  }
 
   $ret .= "</div>\n";
   $ret .= "</div>\n";
@@ -1136,6 +1155,7 @@ sub t()
   if ($s eq "times") {return "krát";}
   if ($s eq "license") {return "licence";}
   if ($s eq "Create date:") {return "Datum vytvoření:";}
+  if ($s eq "illegal") {return "Nahlásit závadný obsah";}
 
 #  return  utf8::decode($s);
   return $s;
@@ -1886,8 +1906,8 @@ sub remove
 
   if (!&check_privileged_access()) {
     syslog('info', $remote_ip . " was denied the right to remove $id");
-     $error_result = 401;
-     return;
+    $error_result = 401;
+    return;
   }
 
   syslog('info', $remote_ip . " wants to remove $id");

@@ -1,4 +1,23 @@
 <?php
+
+#   this file is part of Guideposts
+#   Copyright (C) 2014 - 2017 Michal Grezl
+#
+#   Guideposts is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software Foundation,
+#   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+#
+
 #lat-y
 #lon-x
 
@@ -254,71 +273,71 @@ function insert_to_db($lat, $lon, $url ,$file, $author, $ref, $note, $license, $
 
   $gp_id = $database->lastInsertRowID();
 
-  if ( $ref != '' ) {
+  if ($ref != '' ) {
     $q = "insert into tags values (NULL, $gp_id, 'ref', '" . strtolower($ref) . "')";
     if (!$database->exec($q)) {
-        $global_error_message = "Error: " . $database->lastErrorMsg();
-        printdebug("insert_to_db(): insert tags.ref error: " . $database->lastErrorMsg());
-        return 0;
+      $global_error_message = "Error: " . $database->lastErrorMsg();
+      printdebug("insert_to_db(): insert tags.ref error: " . $database->lastErrorMsg());
+      return 0;
     }
   }
 
-  if ( $gp_type ) {
+  if ($gp_type) {
     switch ($gp_type) {
-        case 'gp':
-            $tag = 'rozcestnik';
-            break;
-        case 'map':
-            $tag = 'mapa';
-            break;
-        case 'pano':
-            $tag = 'panorama';
-            break;
-        case 'info':
-            $tag = 'infotabule';
-            break;
+      case 'gp':
+        $tag = 'rozcestnik';
+        break;
+      case 'map':
+        $tag = 'mapa';
+        break;
+      case 'pano':
+        $tag = 'panorama';
+        break;
+      case 'info':
+        $tag = 'infotabule';
+        break;
     }
 
-    if ( $tag ) {
-        $q = "insert into tags values (NULL, $gp_id, '$tag', '')";
-        if (!$database->exec($q)) {
+    if ($tag) {
+      $q = "insert into tags values (NULL, $gp_id, '$tag', '')";
+      if (!$database->exec($q)) {
+        $global_error_message = "Error: " . $database->lastErrorMsg();
+        printdebug("insert_to_db(): insert tags.$tag error: " . $database->lastErrorMsg());
+        return 0;
+      }
+    }
+
+    if ($gp_type == 'gp' && count($gp_content) > 0) {
+
+      foreach($gp_content as $content) {
+        $tag = '';
+        switch ($content) {
+          case 'hiking':
+            $tag = 'pesi';
+            break;
+          case 'cycle':
+            $tag = 'cyklo';
+            break;
+          case 'ski':
+            $tag = 'lyzarska';
+            break;
+          case 'horse':
+            $tag = 'konska';
+            break;
+          case 'wheelchair':
+            $tag = 'vozíčkář';
+            break;
+        }
+
+        if ($tag) {
+          $q = "insert into tags values (NULL, $gp_id, '$tag', '')";
+          if (!$database->exec($q)) {
             $global_error_message = "Error: " . $database->lastErrorMsg();
             printdebug("insert_to_db(): insert tags.$tag error: " . $database->lastErrorMsg());
             return 0;
+          }
         }
-    }
-
-    if ( $gp_type == 'gp' && count($gp_content) > 0 ) {
-        foreach($gp_content as $content) {
-
-            $tag = '';
-            switch ($content) {
-                case 'hiking':
-                    $tag = 'pesi';
-                    break;
-                case 'cycle':
-                    $tag = 'cyklo';
-                    break;
-                case 'ski':
-                    $tag = 'lyzarska';
-                    break;
-                case 'horse':
-                    $tag = 'konska';
-                    break;
-                case 'wheelchair':
-                    $tag = 'vozíčkář';
-                    break;
-            }
-
-            if ( $tag ) {
-                $q = "insert into tags values (NULL, $gp_id, '$tag', '')";
-                if (!$database->exec($q)) {
-                    $global_error_message = "Error: " . $database->lastErrorMsg();
-                    printdebug("insert_to_db(): insert tags.$tag error: " . $database->lastErrorMsg());
-                    return 0;
-                }
-            }
-        }
+      }
     }
   }
 
@@ -327,50 +346,53 @@ function insert_to_db($lat, $lon, $url ,$file, $author, $ref, $note, $license, $
 }
 
 ################################################################################
- # Returns an array of latitude and longitude from the Image file
- #   ---- http://stackoverflow.com/a/19420991 ----
- # @param image $file
- # @return multitype:number |boolean
-function read_gps_location($file){
+function read_gps_location($file)
 ################################################################################
-    if (is_file($file)) {
-        $info = exif_read_data($file);
-        if (isset($info['GPSLatitude']) && isset($info['GPSLongitude']) &&
-            isset($info['GPSLatitudeRef']) && isset($info['GPSLongitudeRef']) &&
-            in_array($info['GPSLatitudeRef'], array('E','W','N','S')) && in_array($info['GPSLongitudeRef'], array('E','W','N','S'))) {
+{
 
-            $GPSLatitudeRef  = strtolower(trim($info['GPSLatitudeRef']));
-            $GPSLongitudeRef = strtolower(trim($info['GPSLongitudeRef']));
+# Returns an array of latitude and longitude from the Image file
+#   ---- http://stackoverflow.com/a/19420991 ----
+# @param image $file
+# @return multitype:number |boolean
 
-            $lat_degrees_a = explode('/',$info['GPSLatitude'][0]);
-            $lat_minutes_a = explode('/',$info['GPSLatitude'][1]);
-            $lat_seconds_a = explode('/',$info['GPSLatitude'][2]);
-            $lng_degrees_a = explode('/',$info['GPSLongitude'][0]);
-            $lng_minutes_a = explode('/',$info['GPSLongitude'][1]);
-            $lng_seconds_a = explode('/',$info['GPSLongitude'][2]);
+  if (is_file($file)) {
+    $info = exif_read_data($file);
+    if (isset($info['GPSLatitude']) && isset($info['GPSLongitude']) &&
+      isset($info['GPSLatitudeRef']) && isset($info['GPSLongitudeRef']) &&
+      in_array($info['GPSLatitudeRef'], array('E','W','N','S')) && in_array($info['GPSLongitudeRef'], array('E','W','N','S'))) {
 
-            $lat_degrees = $lat_degrees_a[0] / $lat_degrees_a[1];
-            $lat_minutes = $lat_minutes_a[0] / $lat_minutes_a[1];
-            $lat_seconds = $lat_seconds_a[0] / $lat_seconds_a[1];
-            $lng_degrees = $lng_degrees_a[0] / $lng_degrees_a[1];
-            $lng_minutes = $lng_minutes_a[0] / $lng_minutes_a[1];
-            $lng_seconds = $lng_seconds_a[0] / $lng_seconds_a[1];
+      $GPSLatitudeRef  = strtolower(trim($info['GPSLatitudeRef']));
+      $GPSLongitudeRef = strtolower(trim($info['GPSLongitudeRef']));
 
-            $lat = (float) $lat_degrees+((($lat_minutes*60)+($lat_seconds))/3600);
-            $lng = (float) $lng_degrees+((($lng_minutes*60)+($lng_seconds))/3600);
+      $lat_degrees_a = explode('/',$info['GPSLatitude'][0]);
+      $lat_minutes_a = explode('/',$info['GPSLatitude'][1]);
+      $lat_seconds_a = explode('/',$info['GPSLatitude'][2]);
+      $lng_degrees_a = explode('/',$info['GPSLongitude'][0]);
+      $lng_minutes_a = explode('/',$info['GPSLongitude'][1]);
+      $lng_seconds_a = explode('/',$info['GPSLongitude'][2]);
 
-            //If the latitude is South, make it negative.
-            //If the longitude is West, make it negative
-            $GPSLatitudeRef  == 's' ? $lat *= -1 : '';
-            $GPSLongitudeRef == 'w' ? $lng *= -1 : '';
+      $lat_degrees = $lat_degrees_a[0] / $lat_degrees_a[1];
+      $lat_minutes = $lat_minutes_a[0] / $lat_minutes_a[1];
+      $lat_seconds = $lat_seconds_a[0] / $lat_seconds_a[1];
+      $lng_degrees = $lng_degrees_a[0] / $lng_degrees_a[1];
+      $lng_minutes = $lng_minutes_a[0] / $lng_minutes_a[1];
+      $lng_seconds = $lng_seconds_a[0] / $lng_seconds_a[1];
 
-            return array(
-                'lat' => $lat,
-                'lng' => $lng
-            );
-        }
+      $lat = (float) $lat_degrees+((($lat_minutes*60)+($lat_seconds))/3600);
+      $lng = (float) $lng_degrees+((($lng_minutes*60)+($lng_seconds))/3600);
+
+      //If the latitude is South, make it negative.
+      //If the longitude is West, make it negative
+      $GPSLatitudeRef  == 's' ? $lat *= -1 : '';
+      $GPSLongitudeRef == 'w' ? $lng *= -1 : '';
+
+      return array(
+        'lat' => $lat,
+        'lng' => $lng
+      );
     }
-    return false;
+  }
+  return false;
 }
 
 ################################################################################
@@ -421,13 +443,13 @@ function process_file()
   printdebug("lat:lon:author:license");
   printdebug("before $lat:$lon:$author:$license");
 
-  $author = preg_replace('/[^-a-zA-Z0-9_ěščřžýáíéĚŠČŘŽÁÍÉúůÚľĽ .]/', '', $author);
-  $note = preg_replace('/[^-a-zA-Z0-9_ěščřžýáíéĚŠČŘŽÁÍÉúůÚľĽ .]/', '', $note);
+  $author = preg_replace('/[^-a-zA-Z0-9_áčďéěíľňóřšťúůýžÁČĎÉĚÍĽŇÓŘŠŤÚŮÝŽ .]/', '', $author);
+  $note = preg_replace('/[^-a-zA-Z0-9_áčďéěíľňóřšťúůýžÁČĎÉĚÍĽŇÓŘŠŤÚŮÝŽ .]/', '', $note);
   $lat = preg_replace('/,/', '\.', $lat);
   $lon = preg_replace('/,/', '\.', $lon);
   $lat = preg_replace('/[^0-9.]/', '', $lat);
   $lon = preg_replace('/[^0-9.]/', '', $lon);
-  $ref = preg_replace('/[^a-zA-Z0-9.,\/]/', '', $ref);
+  $ref = preg_replace('/[^a-zA-Z0-9.,áčďéěíľňóřšťúůýžÁČĎÉĚÍĽŇÓŘŠŤÚŮÝŽ\/]/', '', $ref);
   $license = preg_replace('/[^CBYSA2340plus]/', '', $license);
 
   printdebug("after $lat:$lon:$author:$license");
@@ -435,6 +457,10 @@ function process_file()
   $file = basename($filename);
   $target_path = "uploads/" . $file;
   $final_path = "img/guidepost/" . $file;
+
+  $target_path = preg_replace('/#/', '', $target_path);
+  $target_path = preg_replace('/;/', '', $target_path);
+  $target_path = preg_replace('/&/', '', $target_path);
 
   printdebug("target: $target_path");
 
@@ -490,7 +516,7 @@ function process_file()
     $result = 0;
   }
 
-  #sanitize filename
+//sanitize filename
 
   if ($result && strpos($filename, ';') !== FALSE) {
     $error_message = "spatny soubor: znak strednik";
@@ -553,9 +579,8 @@ function process_file()
     $result = 0;
   }
 
-
-  if ($result && !copy("uploads/$file","img/guidepost/$file")) {
-    $error_message = "failed to copy $file to destination ... ";
+  if ($result && !copy($target_path,$final_path)) {
+    $error_message = "failed to copy $target_path to destination $final_path ... ";
     printdebug($error_message);
     $result = 0;
   }
