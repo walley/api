@@ -1,6 +1,7 @@
 #
 #   mod_perl handler, guideposts, part of openstreetmap.cz
 #   Copyright (C) 2015, 2016, 2017 Michal Grezl
+#                 2016 Marián Kyral
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
