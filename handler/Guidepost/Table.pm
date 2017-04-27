@@ -2194,35 +2194,35 @@ sub exif()
 sub robot()
 ################################################################################
 {
-  syslog('info', "robot run!");
+  wsyslog('info', "robot run!");
 
   my $query = "select * from changes";
 
   $res = $dbh->selectall_arrayref($query);
   if (!$res) {
     $error_result = 500;
-    syslog('info', "500: robot error: $DBI::errstr");
+    wsyslog('info', "500: robot error: $DBI::errstr");
     return Apache2::Const::SERVER_ERROR;
   };
 
   foreach my $row (@$res) {
     my ($id, $gp_id, $col, $value, $action) = @$row;
     if ($action eq "addtag") {
-      syslog('info', "robot added tag: ($id, $gp_id, $col, $value, $action)");
+      wsyslog('info', "robot added tag: ($id, $gp_id, $col, $value, $action)");
       my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
-      syslog('info', "robot: get $url");
+      wsyslog('info', "robot: get $url");
       my $content = get($url);
-      syslog('info', "robot: " . $content);
+      wsyslog('info', "robot: " . $content);
       $r->print("addtag returned $content ");
     } elsif ($action eq "edit") {
        my $old_value = get_gp_column_value($gp_id, $col);
        if ($old_value eq "" or $old_value eq "none") {
-         syslog('info', "robot adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
+         wsyslog('info', "robot adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
          my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
          my $content = get($url);
          $r->print("edit returned $content ");
        } else {
-         syslog('info', "robot NOT adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
+         wsyslog('info', "robot NOT adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
        }
     } else {
 #      syslog('info', "no robot");
