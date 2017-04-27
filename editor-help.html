@@ -48,9 +48,12 @@
         <br>typ volani GET
         <br>vrati polozky ve vzdalenosti distance od lat,lon
         <br>parametry lat,lon,distance, vzdy nastavi geojson output <a href='http://api.openstreetmap.cz/table/close?lat=49.709297&lon=17.07934&distance=1000'>example</a>
-      <li>tags/id <p>vrati tagy pro fotku id 
-        <br><a href='http://api.openstreetmap.cz/table/tags/10'>example</a></p>
-      <li>tags/add/id/value <p>prida tag</p>
+      <li>tags/id 
+        <br>typ volani GET <p>vrati tagy pro fotku id </p>
+        <br>typ volani DELETE <p>smaze tagy pro fotku id parametry url /id/key:value</p>
+        <br>typ volani POST <p>prida tagy pro fotku id  parametry post id tag</p>
+
+      <li>tags/add/id/value - no longer used
       <li>tags/hashtag/key:value
         <br>typ volani GET
         <br>vyhledava tagy (v db je to brano jako klic a hodnota), tag bez hodnoty se  hleda jako klic: nebo klic, hodnota bez klice :hodnota.
