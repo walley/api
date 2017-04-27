@@ -68,6 +68,7 @@ my $dbh;
 my $BBOX = 0;
 my $LIMIT = 0;
 my $OFFSET = 0;
+my $PROJECT = "";
 my $minlon;
 my $minlat;
 my $maxlon;
