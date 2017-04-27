@@ -716,14 +716,14 @@ sub hashtag
   } elsif ($k eq "" && $v ne "") {
     $query = "select guidepost.* from guidepost,tags where guidepost.id=tags.gp_id and tags.v='$v'";
   } else {
-    syslog("info", "hashtag bad? ($tag)");
+    wsyslog("info", "hashtag bad? ($tag)");
   }
 
   if ($BBOX) {
     $query .= " and ".&add_bbox();
   }
 
-  syslog("info", "hashtag query:" . $query . "(k:v)" . "($k:$v)");
+  wsyslog("info", "hashtag query:" . $query . "(k:v)" . "($k:$v)");
 
   $error_result = &output_data($query);
 }
@@ -746,8 +746,6 @@ sub output_data
   } elsif ($OUTPUT_FORMAT eq "kml") {
     $ret = output_kml($query);
   }
-
-  syslog("info", "output_data result:" . $ret);
 
   return $ret;
 }
@@ -1975,12 +1973,13 @@ sub get_tags()
     return $out;
   };
 
-#  syslog("info", "get_tags($id):" . $query);
-
   my $i = 0;
   foreach my $row (@$res) {
-    $out_array[$i++] .= @$row[2] . ":" . @$row[3];
-#    syslog("info", "get_tags array" . $out_array[$i-1] );
+    if (@$row[3] ne "") {
+      $out_array[$i++] .= @$row[2] . ":" . @$row[3];
+    } else {
+      $out_array[$i++] .= @$row[2];
+    }
   }
 
   if ($OUTPUT_FORMAT eq "json"){
