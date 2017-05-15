@@ -179,12 +179,20 @@ function paginator()
 
 <script>
   init_stuff();
-  gp_count = $.ajax({
+  gpccall = $.ajax({
+    timeout: 5000,
     url: https + "://api.openstreetmap.cz/"+ t +"/count",
     async: false
-  }).responseText;
+  }).done(function(data) {
+    if (console && console.log) {
+      console.log( "gpccall data:", data.slice( 0, 100 ) );
+    }
+  }).fail(function() {
+    alert("error, nelze zjistit celkovy pocet zaznamu");
+  });
 
-  //alert(gp_count);
+  gp_count = gpccall.responseText;
+
   paginator();
   load_page(1);
 </script>
@@ -192,7 +200,11 @@ function paginator()
 <span style="float:left;"><a href="#"><img src="//api.openstreetmap.cz/img/guidepost_nice.png"></a></span>
 <span style="float:right;display: block;"><h1>Guidepost editor</h1></span>
 <div style="clear:both;"></div>
-<span style="float:left;display: block;"><a href="http://openstreetmap.cz?&layers=G">See them on the Map</a></span>
+
+<span style="float:left;display: block;">
+<div id="username">none</div>
+</span>
+
 <span id="login" style="float:right;display: block;"><a href="https://api.openstreetmap.cz/openid/login">OpenID login ...</a></span>
 
 <br><br>
@@ -200,18 +212,20 @@ function paginator()
 <div id="demo_pag1"></div>
 <div id="new-nav"></div>
 
+
+<!--
 <p>
 <a href="#" onclick="javascript:left()"> &lt; </a>
 <a href="#" onclick="javascript:right()"> &gt; </a>
 <div id="currpage">currpage</div>
 </p>
+-->
 
+
+<div style="clear:both;"></div>
+
+<br><br>
 <hr>
-
-<b>Possible Error Response:</b>
-<div id="error">none</div>
-<div id="username">none</div>
-<br>
 <script>
 
   username = $.ajax({
@@ -227,6 +241,8 @@ function paginator()
 
 </script>
 <script id='fbswir2'>(function(i){var f,s=document.getElementById(i);f=document.createElement('iframe');f.src='//api.flattr.com/button/view/?uid=walley&button=compact&url='+encodeURIComponent(document.URL);f.title='Flattr';f.height=20;f.width=110;f.style.borderWidth=0;s.parentNode.insertBefore(f,s);})('fbswir2');</script>
+
+<div style="opacity: 0.2;" id="error">none</div>
 
 </body>
 </html>
