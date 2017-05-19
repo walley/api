@@ -168,7 +168,7 @@ sub handler
 
   foreach $text (@uri_components) {
     $text = &smartdecode($text);
-    $text =~ s/[^A-Za-z0-9ěščřžýáíéůúĚŠČŘŽÝÁÍÉŮÚ.:, ]//g;
+    $text =~ s/[^A-Za-z0-9ěščřžýáíéůúĚŠČŘŽÝÁÍÉŮÚ.:, \/]//g;
   }
 
   $error_result = Apache2::Const::OK;
@@ -233,7 +233,8 @@ sub handler
       my $out = &get_tags($uri_components[4]);
       $r->print($out);
     } elsif ($r->method() eq "DELETE") {
-      &delete_tags($uri_components[3], $uri_components[4]);
+      my $joined_ref = substr(join('/', @uri_components[4 .. scalar @uri_components]), 0, -1);
+      &delete_tags($uri_components[3], $joined_ref);
     } elsif ($r->method() eq "POST") {
       &add_tags($post_data{id}, $post_data{tag});
     }
@@ -561,8 +562,13 @@ sub say_goodbye
 sub smartdecode
 ################################################################################
 {
+  wsyslog('info', "before smartdecode:".$_[0]);
+
   use URI::Escape qw( uri_unescape );
   my $x = my $y = uri_unescape($_[0]);
+
+  wsyslog('info', "after smartdecode: x:".$x.", y:".$y);
+
   return $x if utf8::decode($x);
   return $y;
 }
