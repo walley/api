@@ -562,12 +562,12 @@ sub say_goodbye
 sub smartdecode
 ################################################################################
 {
-  wsyslog('info', "before smartdecode:".$_[0]);
+#  wsyslog('info', "before smartdecode:".$_[0]);
 
   use URI::Escape qw( uri_unescape );
   my $x = my $y = uri_unescape($_[0]);
 
-  wsyslog('info', "after smartdecode: x:".$x.", y:".$y);
+#  wsyslog('info', "after smartdecode: x:".$x.", y:".$y);
 
   return $x if utf8::decode($x);
   return $y;
