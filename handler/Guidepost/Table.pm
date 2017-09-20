@@ -1436,7 +1436,7 @@ sub gp_line()
   $out .= "<script>\n";
   $out .= "\$('#ta" . $id . "').tagEditor({
 
-   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka', 'memorial', 'eurodotace', 'historicke'] },
+   autocomplete: { delay: 0, position: { collision: 'flip' }, source: ['infotabule', 'mapa', 'cyklo', 'ref', 'panorama', 'lyzarska', 'konska', 'rozcestnik', 'naucna', 'znaceni', 'zelena', 'cervena', 'zluta', 'modra', 'bila', 'rozmazane', 'necitelne', 'zastavka', 'memorial', 'eurodotace', 'historicke','smerovetabule'] },
    placeholder: 'Vložte tagy ...',
    delimiter:';',
 
