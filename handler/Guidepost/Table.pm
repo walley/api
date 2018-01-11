@@ -79,6 +79,7 @@ my $error_result;
 my $remote_ip;
 my $dbpath;
 my $user;
+my $hostname;
 
 my $api_request;
 my $api_param;
@@ -131,6 +132,7 @@ sub handler
 #  syslog('info', 'start method:'. $r->method());
 
   my $uri = $r->uri;
+  $hostname = $r->get_server_name();
 
   &parse_query_string($r);
   &parse_post_data($r);
@@ -181,7 +183,9 @@ sub handler
     $user = "anon.openstreetmap.cz";
   }
 
-  wsyslog('info', "request from $remote_ip by $user ver. $api_version: $api_request, method " . $r->method() . ", output " . $OUTPUT_FORMAT . ", limit " . $LIMIT);
+  wsyslog('info', "request to $hostname from $remote_ip by $user");
+  wsyslog('info', "ver. $api_version: $api_request, method " . $r->method());
+  wsyslog('info', ", output " . $OUTPUT_FORMAT . ", limit " . $LIMIT);
 
   if ($api_request eq  "all") {
     &output_all();
@@ -318,7 +322,7 @@ sub error_400()
 <h1>This is bad</h1>
 <p>and you should feel bad</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -336,7 +340,7 @@ sub error_401()
 <h1>You can not do this</h1>
 <p>to me:(</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -354,7 +358,7 @@ sub error_404()
 <h1>Not Found</h1>
 <p>We know nothing about this</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -372,7 +376,7 @@ sub error_412()
 <h1>FAAAAAAAAAAAAAIIIIIIIIIIIIIILLLLLLL!!!11</h1>
 <p>Do NOT fail our preconditions, not cool!</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -390,7 +394,7 @@ sub error_500()
 <h1>YAY!</h1>
 <p>We don\'t know nothing about this ;p</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at api.openstreetmap.cz Port 80</address>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at ' . $hostname . ' Port 80</address>
 </body></html>
 ');
 }
@@ -407,7 +411,7 @@ sub sequence()
   for (my $i = 0; $i < 1000; $i++) {
     $out .= "<li> $i: $seq$i ";
     my $zeropadi = sprintf("%03d", $i);
-    $out .= "<a href='http://api.openstreetmap.cz/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
+    $out .= "<a href='http://" . $hostname . "/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
     if (&tag_query("ref",$seq.$i)) {
     $out .= " - DB ";
     }
@@ -876,8 +880,8 @@ sub output_html
       $prevoffset = 0;
     }
 
-    $prev = "$https://api.openstreetmap.cz/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset;
-    $next = "$https://api.openstreetmap.cz/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset;
+    $prev = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset;
+    $next = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset;
     $out .= "<a href='$prev'><- prev</a>";
     $out .= " | ";
     $out .= "<a href='$next'>next -></a><br>\n";
@@ -1051,7 +1055,7 @@ sub leaderboard
 sub init_inplace_edit()
 ################################################################################
 {
-  my $url = "//api.openstreetmap.cz/" . $api_version . "/setbyid";
+  my $url = "//" . $hostname . "/" . $api_version . "/setbyid";
   my $out = "";
 
   $out .= "<script>\n";
@@ -1130,6 +1134,7 @@ sub delete_button
 {
   my $ret = "";
   $ret .= "<span title='" . &t("remove_picture") ."'>";
+#FIXME introduce cdn for images
   $ret .= "delete <img src='//api.openstreetmap.cz/img/delete.png' width=16 height=16>";
   $ret .= "</span>";
   return $ret;
@@ -1181,7 +1186,7 @@ sub id_stuff
   <script>
   \$('#remove$id').click(function() {
     \$.ajax({
-       url: '//api.openstreetmap.cz/" . $api_version . "/remove/$id',
+       url: '//" . $hostname . "/" . $api_version . "/remove/$id',
     }).done(function() {
       \$('#remove$id').html('marked for deletion')
     });
@@ -1357,7 +1362,7 @@ sub gp_line()
   $out .= &edit_stuff($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license);
 
   $out .= "<span>";
-  $out .= "<br> <a href='" . $https . "://api.openstreetmap.cz/" . $api_version . "/exif/" . $id . "'>" . &t("exif") ."</a>";
+  $out .= "<br> <a href='" . $https . "://" . $hostname . "/" . $api_version . "/exif/" . $id . "'>" . &t("exif") ."</a>";
   $out .= "</span>";
 
   $out .= "</div>";
@@ -1369,7 +1374,7 @@ sub gp_line()
   foreach $col (@attrs) {
     $out .= "
   \$.ajax({
-    url: '" . $https . "://api.openstreetmap.cz/" . $api_version . "/isedited/". $col ."/" . $id . "',
+    url: '" . $https . "://" . $hostname . "/" . $api_version . "/isedited/". $col ."/" . $id . "',
     timeout:5000
   })
   .done(function(data) {
@@ -1392,7 +1397,7 @@ sub gp_line()
       $out .= "
   var text = \"" . &delete_button() . "\";
   \$.ajax({
-    url: '" . $https . "://api.openstreetmap.cz/". $api_version . "/isdeleted/" . $id . "',
+    url: '" . $https . "://" . $hostname . "/" . $api_version . "/isdeleted/" . $id . "',
     timeout:4000
   })
   .done(function(data) {
@@ -1421,9 +1426,9 @@ sub gp_line()
 
 
   $out .= "<div class='Cell'>";
-  $full_uri = "//api.openstreetmap.cz/".$url;
+  $full_uri = "//" . $hostname . "/".$url;
 #  $out .= "<a href='$full_uri'><img src='$full_uri' height='150px'><br>$name</a>";
-  my $thumbnailurl = "http://api.openstreetmap.cz/p/phpThumb.php?h=150&src=" . $https.":".$full_uri;
+  my $thumbnailurl = "http://" . $hostname . "/p/phpThumb.php?h=150&src=" . $https.":".$full_uri;
   $out .= "<a href='$full_uri'><img src='".$thumbnailurl."' height='150px'><br>$name</a>";
   $out .= "</div>\n";
 
@@ -1446,7 +1451,7 @@ sub gp_line()
    beforeTagSave: function(field, editor, tags, tag, val) {
      \$.ajax({
       type: 'POST',
-      url: '" . $https . "://api.openstreetmap.cz/" . $api_version . "/tags/',
+      url: '" . $https . "://" . $hostname . "/" . $api_version . "/tags/',
       data: 'id=" . $id . "&tag=' + val,
       timeout:4000
     })
@@ -1472,7 +1477,7 @@ sub gp_line()
 
    beforeTagDelete: function(field, editor, tags, val) {
      \$.ajax({
-      url: '" . $https . "://api.openstreetmap.cz/" . $api_version . "/tags/" . $id . "/' + val,
+      url: '" . $https . "://" . $hostname . "/" . $api_version . "/tags/" . $id . "/' + val,
       type: 'DELETE',
       timeout:4000
     })
@@ -1657,7 +1662,7 @@ sub review_entry
   $out .= "<tr>\n";
 
   $out .= "<td>change id:$id</td>";
-  $out .= "<td>guidepost id:<a href='//api.openstreetmap.cz/" . $api_version . "/id/$gp_id'>$gp_id</a></td>";
+  $out .= "<td>guidepost id:<a href='//" . $hostname . "/" . $api_version . "/id/$gp_id'>$gp_id</a></td>";
 
   $out .= "</tr>\n";
   $out .= "<tr>\n";
@@ -1715,7 +1720,7 @@ sub review_entry
   $out .= "<table>";
   $out .= "<tr>";
   $out .= "<td>";
-  $out .= "<img align='bottom' id='wheelzoom$req_id' src='//api.openstreetmap.cz/img/guidepost/$img' width='320' height='200' alt='mapic'>";
+  $out .= "<img align='bottom' id='wheelzoom$req_id' src='//" . $hostname . "/img/guidepost/$img' width='320' height='200' alt='mapic'>";
   $out .= "</td>";
   $out .= "<td>";
   $out .= "<button style='height:200px;width:200px' onclick='javascript:reject(".$id."," . $req_id . ")' > reject </button>";
@@ -1770,7 +1775,7 @@ sub review_form
   $out .= "
 function approve(id,divid)
 {
-  \$.ajax( '//api.openstreetmap.cz/" . $api_version . "/approve/' + id, function(data) {
+  \$.ajax( '//" . $hostname . "/" . $api_version . "/approve/' + id, function(data) {
     alert( 'Load was performed.' + data );
   })
   .done(function() {
@@ -1785,7 +1790,7 @@ function approve(id,divid)
 
 function reject(id,divid)
 {
-  \$.ajax( '//api.openstreetmap.cz/" . $api_version . "/reject/' + id, function(data) {
+  \$.ajax( '//" . $hostname . "/" . $api_version . "/reject/' + id, function(data) {
     alert( 'Load was performed.'+data );
   })
   .done(function() {
@@ -2291,7 +2296,7 @@ sub robot()
     my ($id, $gp_id, $col, $value, $action) = @$row;
     if ($action eq "addtag") {
       wsyslog('info', "robot added tag: ($id, $gp_id, $col, $value, $action)");
-      my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+      my $url = "http://" . $hostname . "/table/approve/" . $id;
       wsyslog('info', "robot: get $url");
       my $content = get($url);
       wsyslog('info', "robot: " . $content);
@@ -2300,7 +2305,7 @@ sub robot()
        my $old_value = get_gp_column_value($gp_id, $col);
        if ($old_value eq "" or $old_value eq "none") {
          wsyslog('info', "robot adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
-         my $url = "http://api.openstreetmap.cz/table/approve/" . $id;
+         my $url = "http://" . $hostname . "/table/approve/" . $id;
          my $content = get($url);
          $r->print("edit returned $content ");
        } else {
@@ -2316,6 +2321,7 @@ sub robot()
 sub login()
 ################################################################################
 {
+#FIXME https://github.com/osmcz/api/issues/44
   my $uri_redirect = "https://api.openstreetmap.cz/webapps/editor.html?login=openid&amp;xpage=0";
   $r->print("<html>");
   $r->print("<head>");
