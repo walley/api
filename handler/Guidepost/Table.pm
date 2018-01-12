@@ -1426,9 +1426,12 @@ sub gp_line()
 
 
   $out .= "<div class='Cell'>";
-  $full_uri = "//" . $hostname . "/".$url;
+
+  $full_uri = $https.":"."//" . $hostname . "/".$url;
+
 #  $out .= "<a href='$full_uri'><img src='$full_uri' height='150px'><br>$name</a>";
-  my $thumbnailurl = "http://" . $hostname . "/p/phpThumb.php?h=150&src=" . $https.":".$full_uri;
+
+  my $thumbnailurl = "http://" . $hostname . "/p/phpThumb.php?h=150&src=" . $full_uri;
   $out .= "<a href='$full_uri'><img src='".$thumbnailurl."' height='150px'><br>$name</a>";
   $out .= "</div>\n";
 
