@@ -81,8 +81,8 @@ function upload_init()
   );
 
   var layer_kctcz = new OpenLayers.Layer.TMS(
-    "Turisticke stezky",
-    "http://map.openstreetmap.cz/kct_tiles/",
+    "mtbmap",
+    "http://tile.mtbmap.cz/mtbmap_tiles/",
     {
       isBaseLayer:false,
       layername: 'kctcz',
@@ -91,7 +91,7 @@ function upload_init()
       type: 'png',
       getURL: upload_getTileURL,
       displayOutsideMaxExtent: true,
-      attribution: '<a href="http://www.openstreetmap.cz/">OSM CZ</a>'
+      attribution: '<a href="mtbmap (OpenStreetMap.org a USGS)'
     }
   );
   upload_map.addLayer(layer_kctcz);

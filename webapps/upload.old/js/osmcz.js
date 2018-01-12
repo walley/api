@@ -5,16 +5,10 @@ var marker = L.marker([0, 0]);
 initmap();
 
 function initmap() {
-    var devicePixelRatio = window.devicePixelRatio || 1,
-        mapboxFormat = devicePixelRatio >= 2 ? '@2x.png' : '.png';
 
     map = new L.Map('map', {zoomControl: false});
-    map.attributionControl.setPrefix("<a href='https://github.com/osmcz/osmcz' title='Projekt na Githubu'><img src='http://github.com/favicon.ico' width='10' style='margin-right:1ex'>osmcz-app</a> " + OSMCZ_APP_VERSION)
+    map.attributionControl.setPrefix("<a href='https://openstreetmap.cz' title='osmcz'>openstreetmap.cz</a> ");
     var osmAttr = '<span>&copy;</span><a href="http://openstreetmap.org/copyright"> přispěvatelé OpenStreetMap</a>';
-
-    var mapbox = L.tileLayer('http://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}' + mapboxFormat + '?access_token=pk.eyJ1IjoiemJ5Y3oiLCJhIjoiRUdkVEMzMCJ9.7eJ3YhCQtbVUET92En5aGA', {
-        attribution: 'OpenStreetMap.org & Mapbox'
-    });
 
     var osm = L.tileLayer('http://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -59,13 +53,6 @@ function initmap() {
         code: 'K'
     });
 
-    var ortofotoOverlay = L.tileLayer("https://{s}.tiles.mapbox.com/v4/zbycz.e9b65202/{z}/{x}/{y}" + mapboxFormat + "?access_token=pk.eyJ1IjoiemJ5Y3oiLCJhIjoiRUdkVEMzMCJ9.7eJ3YhCQtbVUET92En5aGA", {
-        maxZoom: 22,
-        attribution: osmAttr + ', <a href="http://www.poloha.net">poloha.net</a>',
-        opacity: 1,
-        code: 'O'
-    });
-
     var vrstevniceOverlay = L.tileLayer("http://tile.poloha.net/hills/{z}/{x}/{y}.png", {
         maxZoom: 18,
         attribution: osmAttr + ', <a href="http://www.poloha.net">poloha.net</a>',
@@ -83,16 +70,8 @@ function initmap() {
         attribution: '<a href="http://www.cuzk.cz">ČÚZK</a>',
         code: 'o'
     });
-    map.on('layeradd', function (event) {
-        if (event.layer == ortofoto || event.layer == vodovky) {  //TODO vypnutí overlay + přepnutí na druhou to buguje
-            if (!map.hasLayer(ortofotoOverlay)) {
-                map.addLayer(ortofotoOverlay);
-            }
-        }
-    });
 
     baseLayers = {
-        "Mapbox streets": mapbox.addTo(map),
         "KČT trasy poloha.net": kct,
         "MTBMap.cz": mtb,
         "OpenStreetMap Mapnik": osm,
@@ -102,7 +81,6 @@ function initmap() {
         "Ortofoto ČÚZK": ortofoto
     };
     overlays = {
-        "Ortofoto popisky": ortofotoOverlay,
         "KČT trasy poloha.net": kctOverlay,
         "Vrstevnice": vrstevniceOverlay
     };
@@ -126,35 +104,6 @@ function initmap() {
         icon: 'glyphicon glyphicon-map-marker',
         strings: {
             title: "Zobrazit moji aktuální polohu"
-        }
-    }).addTo(map);
-
-    // leaflet-search
-    map.addControl(new L.Control.Search({
-        url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
-        jsonpParam: 'json_callback',
-        propertyName: 'display_name',
-        propertyLoc: ['lat', 'lon'],
-        circleLocation: false,
-        markerLocation: true,
-        autoType: false,
-        autoCollapse: true,
-        minLength: 2,
-        zoom: 10,
-        textPlaceholder: 'Hledat…'
-    }));
-
-    // leaflet-filelayer - upload GPX, KML a GeoJSON
-    var style = {color: 'red', opacity: .6, fillOpacity: .5, weight: 4, clickable: false};
-    L.Control.FileLayerLoad.LABEL = '<span class="glyphicon glyphicon-folder-open"></span>';
-    L.Control.FileLayerLoad.TITLE = 'Načíst lokální data (GPX, KML, GeoJSON)';
-    L.Control.fileLayerLoad({
-        fitBounds: true,
-        layerOptions: {
-            style: style,
-            pointToLayer: function (data, latlng) {
-                return L.circleMarker(latlng, {style: style});
-            }
         }
     }).addTo(map);
 
@@ -206,56 +155,6 @@ function initmap() {
         }
     });
 
-    // -------------------- overlay --------------------
-
-    var showOverlayOnClick = function () {
-        $('nav .active').on('click.fader', function (event) {
-            event.preventDefault();
-            map.scrollWheelZoom.disable();
-            container.fadeIn('slow');
-            $(this).addClass('active').off('click.fader');
-        });
-    };
-
-    var closeOverlay = function () {
-        map.scrollWheelZoom.enable();
-        container.fadeOut('slow', function () {
-            setTimeout(function () {
-                $('nav .active').removeClass('active');
-            }, 700);
-        });
-
-        showOverlayOnClick();
-
-        if (location.pathname == '/splash') {
-            history.pushState({}, "", "/");
-        }
-    };
-
-    // skrytí obsahu při kliku / posunutí mapy
-    var container = $('#main .container');
-
-    map.scrollWheelZoom.disable(); // defaultně je otevřený = zakážem scroll-zoom
-    map.on('click movestart', closeOverlay); //vždy
-
-    if (container.hasClass('splash')) { //pouze splash-screen (je defaultně skrytý přes css)
-        $('.close-overlay').click(closeOverlay);
-        container.click(function (event) {
-            if (event.target.parentNode == this) //div.row děti v .containeru
-                setTimeout(closeOverlay, 200);
-        });
-
-        // skrytí overlay
-        if (!Cookies.get('overlayShown') || location.pathname == '/splash') {
-            container.show();
-            Cookies.set('overlayShown', 'yes', {expires: 7}); // za 7 dní zobrazíme znovu
-        }
-        else {
-            map.scrollWheelZoom.enable();
-            showOverlayOnClick();
-            $('nav .active').removeClass('active');
-        }
-    }
 
 }
 
