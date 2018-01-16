@@ -1548,7 +1548,7 @@ sub page_header()
   <meta charset="utf-8">
   <meta http-equiv="cache-control" content="no-cache">
   <meta http-equiv="pragma" content="no-cache">
-  <link rel="stylesheet" type="text/css" href="//api.openstreetmap.cz/editor.css">
+  <link rel="stylesheet" type="text/css" href="//api.openstreetmap.cz/webapps/editor/editor.css">
   <title>openstreetmap.cz guidepost editor</title>
 ';
 
@@ -2349,7 +2349,7 @@ sub login()
 ################################################################################
 {
 #FIXME https://github.com/osmcz/api/issues/44
-  my $uri_redirect = "https://api.openstreetmap.cz/webapps/editor.html?login=openid&amp;xpage=0";
+  my $uri_redirect = "https://api.openstreetmap.cz/webapps/editor/editor.html?login=openid&amp;xpage=0";
   $r->print("<html>");
   $r->print("<head>");
   $r->print("<meta http-equiv='REFRESH' content='1;url=$uri_redirect'>");
