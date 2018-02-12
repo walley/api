@@ -71,6 +71,9 @@ my $BBOX = 0;
 my $LIMIT = 0;
 my $OFFSET = 0;
 my $PROJECT = "";
+
+my $image_root = "/var/www/api/";
+
 my $minlon;
 my $minlat;
 my $maxlon;
@@ -475,6 +478,7 @@ sub check_privileged_access()
     185.93.60.0/22
     31.31.78.232/32
     195.113.123.32/28
+    193.164.133.120/32
   );
 
 #tmobile    62.141.23.8/32
@@ -2215,7 +2219,7 @@ sub delete_tags()
 sub get_exif_data()
 ################################################################################
 {
-  my $image_location = "/home/walley/www/mapy/img/guidepost";
+  my $image_location = $image_root;
   my ($id, $ret_group, $ret_tag) = @_;
   my $image_file = &get_gp_column_value($id, 'name');
   my $out = "";
