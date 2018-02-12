@@ -2221,7 +2221,7 @@ sub get_exif_data()
 {
   my $image_location = $image_root;
   my ($id, $ret_group, $ret_tag) = @_;
-  my $image_file = &get_gp_column_value($id, 'name');
+  my $image_file = &get_gp_column_value($id, 'url');
   my $out = "";
   my $image = $image_location."/".$image_file;
 
