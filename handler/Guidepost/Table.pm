@@ -73,6 +73,7 @@ my $OFFSET = 0;
 my $PROJECT = "";
 
 my $image_root = "/var/www/api/";
+my $cdn =  "//cdn.openstreetmap.cz/";
 
 my $minlon;
 my $minlat;
@@ -1139,7 +1140,7 @@ sub delete_button
   my $ret = "";
   $ret .= "<span title='" . &t("remove_picture") ."'>";
 #FIXME introduce cdn for images
-  $ret .= "delete <img src='//api.openstreetmap.cz/img/delete.png' width=16 height=16>";
+  $ret .= "delete <img src='" . $cdn . "img/delete.png' width=16 height=16>";
   $ret .= "</span>";
   return $ret;
 }
@@ -1151,7 +1152,7 @@ sub report_illegal
   my ($id) = @_;
   my $ret = "";
   $ret .= "<span title='" . &t("remove_picture") ."'>";
-  $ret .= "<img src='//api.openstreetmap.cz/img/delete.png' width=16 height=16>";
+  $ret .= "<img src='" . $cdn . "img/delete.png' width=16 height=16>";
   $ret .= "<a href='mailto:openstreetmap\@openstreetmap.cz?Subject=osm%20photo%20" . $id . "%20is%20illegal' target='_top'>".&t("illegal")."</a>";
   $ret .= "</span>";
   return $ret;
@@ -2008,8 +2009,8 @@ sub delete_id
 #  $res = $dbh->selectall_hashref($query, { Slice => {} });
   $res = $dbh->selectall_hashref($query, 'id');
 
-  my $original_file = "/home/walley/www/mapy/img/guidepost/" . $res->{$id}->{name};
-  my $new_file = "/home/walley/www/mapy/img/guidepost/deleted/" . $res->{$id}->{name};
+  my $original_file =  $image_root . $res->{$id}->{url};
+  my $new_file = $image_root . "/deleted/" . $res->{$id}->{url};
 
 #move picture to backup directory
   wsyslog('info', "Moving $original_file to $new_file");
@@ -2254,9 +2255,9 @@ sub get_exif_data()
 sub exif()
 ################################################################################
 {
-  my $image_location = "/home/walley/www/mapy/img/guidepost";
+  my $image_location = $image_root;
   my ($id) = @_;
-  my $image_file = &get_gp_column_value($id, 'name');
+  my $image_file = &get_gp_column_value($id, 'url');
   my $out = "";
   my $image = $image_location."/".$image_file;
 
