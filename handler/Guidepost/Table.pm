@@ -1,6 +1,6 @@
 #
 #   mod_perl handler, guideposts, part of openstreetmap.cz
-#   Copyright (C) 2015, 2016, 2017 Michal Grezl
+#   Copyright (C) 2015 - 2018 Michal Grezl
 #                 2016 Marián Kyral
 #                 2016 Miroslav Suchý
 #
@@ -162,8 +162,12 @@ sub handler
   } elsif ($get_data{output} eq "json") {
     $OUTPUT_FORMAT = "json";
     $r->content_type('text/plain; charset=utf-8');
+  } elsif ($get_data{output} eq "gpx") {
+    $OUTPUT_FORMAT = "gpx";
+    $r->content_type('text/plain; charset=utf-8');
   } elsif ($get_data{output} eq "kml") {
     $OUTPUT_FORMAT = "kml";
+    $r->content_type('text/plain; charset=utf-8');
   }
 
   $r->no_cache(1);
@@ -766,7 +770,7 @@ sub output_data
   my ($query) = @_;
   my $ret;
 
-#  syslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
+  wsyslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
 
   if ($OUTPUT_FORMAT eq "html") {
     $ret = output_html($query);
@@ -774,9 +778,13 @@ sub output_data
     $ret = output_geojson($query);
   } elsif ($OUTPUT_FORMAT eq "json") {
     $ret = output_json($query);
+  } elsif ($OUTPUT_FORMAT eq "gpx") {
+    $ret = output_gpx($query);
   } elsif ($OUTPUT_FORMAT eq "kml") {
     $ret = output_kml($query);
   }
+
+  wsyslog("info", "output_data returning: $ret");
 
   return $ret;
 }
@@ -814,28 +822,107 @@ sub output_kml
 
   my ($query) = @_;
   my $out = "";
+
+#  $res = $dbh->selectall_arrayref($query) or do {
+#    wsyslog('info', "output_kml: select err " . $DBI::errstr);
+#    return Apache2::Const::SERVER_ERROR;
+#  };
+
+  my $style = q(
+ <Style id="guidepost">
+  <IconStyle>
+   <Icon>
+    <href>http://maps.google.com/mapfiles/kml/pal4/icon28.png</href>
+   </Icon>
+  </IconStyle>
+ </Style>
+);
+
+  $out .= q(<?xml version="1.0" encoding="UTF-8"?>);
+  $out .= "\n";
+  $out .= q(<kml xmlns="http://www.opengis.net/kml/2.2">);
+  $out .= "\n";
+  $out .= "<Document>\n";
+
+  $out .= $style;
+
+  my $sth = $dbh->prepare($query);
+  $sth->execute();
+  while($ref = $sth->fetchrow_hashref) {
+#     print join (", ", keys %$ref), "\n";
+#     print join (", ", values %$ref), "\n";
+
+  $desc = "<h1>Guidepost</h1>"
+  . "<ul>"
+  . "<li>pozn:" . %$ref{note}
+  . "<li>ref:" . %$ref{ref}
+  . "<li>attr:" . %$ref{attribution}
+  . "</ul>"
+  . "<img src='http://api.openstreetmap.cz/".%$ref{url}."'>";
+
+  $out .= " <Placemark id=\"w" . %$ref{id}."\">\n";
+  $out .= "  <styleUrl>#guidepost</styleUrl>\n";
+  $out .= "  <name>" . %$ref{name} . "</name>\n";
+  $out .= "  <description>\n<![CDATA[\n" . $desc . "\n]]>\n</description>\n";
+  $out .= "  <Point>\n";
+  $out .= "   <coordinates>". %$ref{lon} . "," . %$ref{lat} . ",0</coordinates>\n";
+  $out .= "  </Point>\n";
+  $out .= " </Placemark>\n";
+  }
+
+  $out .= "</Document>\n";
+  $out .= "</kml>\n";
+
+  $r->print($out);
+
+  return Apache2::Const::OK;
+}
+
+################################################################################
+sub output_gpx
+################################################################################
+{
+  use utf8;
+
+  my ($query) = @_;
+  my $out = "";
   my $pt;
   my $ft;
-  my @feature_objects;
 
   $res = $dbh->selectall_arrayref($query) or do {
-    wsyslog('info', "output_kml: select err " . $DBI::errstr);
+    wsyslog('info', "output_gpx: select err " . $DBI::errstr);
+    $error_result = 500;
     return Apache2::Const::SERVER_ERROR;
   };
 
-  $out .= q(<?xml version="1.0" encoding="UTF-8"?>);
-  $out .= q(<kml xmlns="http://www.opengis.net/kml/2.2">);
-  $out .= q(  <Placemark>);
-  $out .= q(    <name>TBD TBD Simple placemark</name>);
-  $out .= q(    <description>TBD Attached to the ground. Intelligently places itself );
-  $out .= q(       at the height of the underlying terrain.</description>);
-  $out .= q(    <Point>);
-  $out .= q(      <coordinates>-122.0822035425683,37.42228990140251,0</coordinates>);
-  $out .= q(    </Point>);
-  $out .= q(  </Placemark>);
-  $out .= q(</kml>);
+  my $gpx = '<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="walley" version="1.1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www8.garmin.com/xmlschemas/GpxExtensions/v3/GpxExtensionsv3.xsd">';
+  #my $gpx = '<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">'
+  $out .= q(<?xml version="1.0" encoding="UTF-8" standalone="no" ?>);
+  $out .= "\n";
+  $out .= $gpx;
+  $out .= "\n";
 
-  return Apache2::Const::SERVER_ERROR;
+  foreach my $row (@$res) {
+    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license) = @$row;
+    $cmt = "$attribution $ref $note";
+    $out .= " <wpt lat=\"$lat\" lon=\"$lon\">\n";
+    $out .= "  <ele>0</ele>\n";
+    $out .= "  <time>2007-08-26T16:08:17Z</time>\n";
+    $out .= "  <name>$name</name>\n";
+    $out .= "  <cmt>$cmt</cmt>\n";
+    $out .= "  <extensions>\n";
+    $out .= "   <gpxx:WaypointExtension>\n";
+    $out .= "   <gpxx:Proximity>100</gpxx:Proximity>\n";
+    $out .= "   </gpxx:WaypointExtension>\n";
+    $out .= "  </extensions>\n";
+  }
+
+  $out .= " </wpt>\n";
+  $out .= "</gpx>\n";
+
+  $r->print($out);
+
+  return Apache2::Const::OK;
 }
 
 ################################################################################
@@ -2285,6 +2372,7 @@ sub exif()
     $exifdata{$group}{$exifTool->GetDescription($tag)} = $val;
   }
 
+#fixme try this $OUTPUT_FORMAT ~~ ["geojson" "kml" "gpx"]
   if ($OUTPUT_FORMAT eq "geojson" or $OUTPUT_FORMAT eq "kml") {
     #Bad Request
     $error_result = 400;
