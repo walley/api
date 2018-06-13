@@ -34,35 +34,46 @@ You need to have mod_perl2 from http://perl.apache.org/ installed.
 * guidepost db
 
 ```sql
+CREATE TABLE guidepost (                                       
+  id integer primary key AUTOINCREMENT,
+  lat numeric,                                                                  
+  lon numeric,                                                                  
+  url varchar,                                                                  
+  name varchar,                                                                 
+  attribution varchar, 
+  ref varchar, 
+  note varchar, 
+  license varchar
+);
+
 CREATE TABLE changes (
-  id integer primary key AUTOINCREMENT,
-  gp_id integer,
-  col varchar,
-  value varchar,
-  action varchar
+id integer primary key AUTOINCREMENT,
+gp_id integer,
+col varchar,
+value varchar, action varchar
 );
 
-CREATE TABLE guidepost (
-  id integer primary key AUTOINCREMENT,
-  lat numeric,
-  lon numeric,
-  url varchar,
-  name varchar,
-  attribution varchar,
-  ref varchar,
-  note varchar
+CREATE TABLE tags ( 
+id integer primary key AUTOINCREMENT, 
+gp_id integer, 
+k varchar, 
+v varchar 
 );
 
-create table tags (
-  id integer primary key AUTOINCREMENT,
+CREATE TABLE time (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   gp_id integer,
-  k varchar,
-  v varchar
+  sqltime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+
+CREATE INDEX lat ON guidepost (lat);
+CREATE INDEX lon ON guidepost (lon);
+
 ```
+
 * commons db
 
-```
+```sql
 CREATE TABLE commons(
 id integer primary key AUTOINCREMENT,
 lat numeric,
