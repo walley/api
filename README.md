@@ -73,9 +73,11 @@ desc varchar
 ```
 
 # dirs:
-commons-scripts - bunch of scripts used to create commons db
-handler - mod_perl handlers
-vagrant - portable virtual software development environment, debian and others
+* commons-scripts - bunch of scripts used to create commons db
+
+* handler - mod_perl handlers
+
+* vagrant - portable virtual software development environment, debian and others
 
 
 # guidepost api:
