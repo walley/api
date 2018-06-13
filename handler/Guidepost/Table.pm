@@ -71,6 +71,7 @@ my $BBOX = 0;
 my $LIMIT = 0;
 my $OFFSET = 0;
 my $PROJECT = "";
+my $PROJECTID = 0;
 
 my $image_root = "/var/www/api/";
 my $cdn =  "//cdn.openstreetmap.cz/";
@@ -100,6 +101,8 @@ sub handler
   $BBOX = 0;
   $LIMIT = 0;
   $OFFSET = 0;
+  $PROJECT = "";
+  $PROJECTID = 0;
 
   $api_request = "";
   $api_param = "";
@@ -153,6 +156,10 @@ sub handler
     $OFFSET = $get_data{offset};
   }
 
+  if (exists $get_data{project}) {
+    $PROJECT = $get_data{project};
+  }
+
   if (!exists $get_data{output} or $get_data{output} eq "html") {
     $OUTPUT_FORMAT = "html";
     $r->content_type('text/html; charset=utf-8');
@@ -193,7 +200,10 @@ sub handler
 
   wsyslog('info', "request to $hostname from $remote_ip by $user");
   wsyslog('info', "ver. $api_version: $api_request, method " . $r->method());
-  wsyslog('info', ", output " . $OUTPUT_FORMAT . ", limit " . $LIMIT);
+  wsyslog('info', "output " . $OUTPUT_FORMAT . ", limit " . $LIMIT);
+  if ($PROJECT ne "") {
+    wsyslog('info', "project " . $PROJECT . "id is " . $PROJECTID);
+  }
 
   if ($api_request eq  "all") {
     &output_all();
@@ -288,6 +298,8 @@ sub handler
     &get_time_added($uri_components[3]);
   } elsif ($api_request eq "timetaken") {
     &get_time_taken($uri_components[3]);
+  } elsif ($api_request eq "project") {
+    &add_to_project(10,1);
   } else {
     wsyslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -442,7 +454,13 @@ sub sequence()
 sub output_all()
 ################################################################################
 {
-  my $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
+  my $query;
+
+  if ($PROJECT ne "") {
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=1;";
+  } else {
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
+  }
 
   if ($BBOX) {
     $query .= " where " . &add_bbox();
@@ -2565,6 +2583,36 @@ sub get_time_taken
   wsyslog('info', "get_time_taken($id)");
   my $out = &get_exif_data($id, "EXIF", "Create Date");
   $r->print($out);
+}
+
+################################################################################
+sub add_to_project
+################################################################################
+{
+
+  my ($gp_id, $prj_id) = @_;
+
+  $query = "insert into prjgp (gp_id, prj_id) values ($gp_id, $prj_id)";
+
+  wsyslog('info', "adding $gp_id into project ...");
+  my $sth = $dbh->prepare($query) or do {
+    wsyslog('info', "500: prepare error, query is:" . $query);
+    $error_result = 500;
+    return;
+  };
+
+  $sth->execute() or do {
+    wsyslog("info", "500: add_to_project dbi error " . $DBI::errstr);
+  };
+
+ $r->print("a");
+
+}
+
+################################################################################
+sub remove_from_project
+################################################################################
+{
 }
 
 1;
