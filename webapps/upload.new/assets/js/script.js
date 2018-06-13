@@ -95,7 +95,7 @@ content += "<p>" + formatFileSize(data.files[0].size) + "</p>" + image_info;
     },
 
     always: function (e, data) {
-//  alert(data.result.files[2].error);
+      alert(data.result.files[2].error);
       $('#lat').text(data.result.files[2].lat);
       $('#lon').text(data.result.files[2].lon);
       $('#time').text(data.result.files[2].time);

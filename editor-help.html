@@ -25,6 +25,8 @@
     <li>160315: tagy, vyhledavani, cistej JSON output
     <li>160323: move, exif
     <li>160329: ping, robot
+    <li>180520: gpx, json
+    <li>180524: time(tbd)
     </ul>
     <hr>
     <h1>public api</h1>
@@ -36,10 +38,10 @@
       <li>username</li>
       <li>name</li>
 
-      <li>id/hodnota   <p>Zobrazí položku db s id rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/id/100?output=html'>example</a></p></li>
-      <li>ref/hodnota  <p>Zobrazí včechny položky db s ref rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/ref/100?output=html'>example</a></p></li>
-      <li>name/hodnota <p>Zobrazí včechny položky db se jmenem autora rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/name/bublifuk?output=html'>example</a></p></li>
-      <li>note/hodnota <p>Zobrazí včechny položky db s poznamka rovnajici se hodnota<a href='http://api.openstreetmap.cz/table/note/100?output=html'>example</a></p></li>
+      <li>id/hodnota   <p>Zobrazí položku db s id rovnajici se hodnota <br><a href='http://api.openstreetmap.cz/table/id/100?output=html'>example</a></p></li>
+      <li>ref/hodnota  <p>Zobrazí včechny položky db s ref rovnajici se hodnota <br><a href='http://api.openstreetmap.cz/table/ref/100?output=html'>example</a></p></li>
+      <li>name/hodnota <p>Zobrazí včechny položky db se jmenem autora rovnajici se hodnota <br><a href='http://api.openstreetmap.cz/table/name/bublifuk?output=html'>example</a></p></li>
+      <li>note/hodnota <p>Zobrazí včechny položky db s poznamka rovnajici se hodnota <br><a href='http://api.openstreetmap.cz/table/note/100?output=html'>example</a></p></li>
 
       <li>isedited/col/id <p>vrati pocet editaci atributu col pro id</p>
       <li>isedited/column/id <p>column - ref|note|...</p></li>
@@ -93,6 +95,17 @@
       <li>remove
         <br>typ volani GET
         <br>parametry: id
+
+      <li>timeadded
+        <br>typ volani GET
+        <br><a href='http://api.openstreetmap.cz/table/timeadded/14000?output=html'>example</a></p></li>
+        <br>parametry: id
+<p> zobrazi cas pridani fotky, pokud je znam, format zatim pouze 2017-07-17 15:58:39</p>
+      <li>timetaken
+        <br>typ volani GET
+        <br><a href='http://api.openstreetmap.cz/table/timetaken/100?output=html'>example</a></p></li>
+        <br>parametry: id
+<p> zobrazi cas vyfoceni z exifu pokud je znam, format zatim pouze 2017-07-17 15:58:39</p>
     </ul>
     <br>
 
@@ -109,13 +122,13 @@
         <li>html - vystup v html&nbsp;
         <li>geojson - vystup v geojson
         <li>kml - tbd
-        <li>gpx
+        <li>gpx - gpx s extension na vzdalenost od garminu
         <li>json - cisty json.
       </ol>
       <li><b>limit</b> - omezuje pocet vracenych vysledku
       <li><b>offset</b> - umoznuje zobrazeni od urciteho zaznamu, takze ve spolupraci s limit to dela od-do
     </ol>
-    
+
     <h3>privileged api</h3>
       <ol>
         <li>delete/id smazani</li>

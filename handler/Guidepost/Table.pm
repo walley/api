@@ -217,6 +217,10 @@ sub handler
   } elsif ($api_request eq "setbyid") {
     &set_by_id($post_data{id}, $post_data{value});
   } elsif ($api_request eq "move") {
+    if ($post_data{lname} ne "" ) {
+      $user = $post_data{lname};
+      wsyslog('info', "osmcz username: $user");
+    }
     &move_photo($post_data{id}, $post_data{lat}, $post_data{lon});
   } elsif ($api_request eq "isedited") {
     #/isedited/ref/id
@@ -280,6 +284,10 @@ sub handler
     }
   } elsif ($api_request eq "sequence") {
     &sequence($uri_components[3]);
+  } elsif ($api_request eq "timeadded") {
+    &get_time_added($uri_components[3]);
+  } elsif ($api_request eq "timetaken") {
+    &get_time_taken($uri_components[3]);
   } else {
     wsyslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -481,7 +489,6 @@ sub check_privileged_access()
   my $ok = subnet_matcher qw(
     185.93.61.0/24
     185.93.60.0/22
-    31.31.78.232/32
     195.113.123.32/28
     193.164.133.120/32
   );
@@ -1457,6 +1464,10 @@ sub gp_line()
   $out .= "<br> <a href='" . $https . "://" . $hostname . "/" . $api_version . "/exif/" . $id . "'>" . &t("exif") ."</a>";
   $out .= "</span>";
 
+  $out .= "<span>";
+  $out .= "<br> <a href='" . $https . "://" . $hostname . "/" . $api_version . "/timeadded/" . $id . "'>" . &t("date added") ."</a>";
+  $out .= "</span>";
+
   $out .= "</div>";
 
   @attrs= ("lat", "lon", "ref", "attribution", "note");
@@ -1739,7 +1750,9 @@ sub move_photo()
 
   wsyslog("info", "move_photo($id, $lat, $lon): done");
 
-  if (&check_privileged_access()) {&auto_approve();}
+# if (&check_privileged_access()) {&auto_approve();} 
+# osmcz web sends username from osm oauth
+  &auto_approve();
 }
 
 ################################################################################
@@ -2507,10 +2520,51 @@ sub show_licenses()
   } elsif ($OUTPUT_FORMAT eq "json") {
     %out = ("licenses" => \%licenses, "sites" => \%license_sites);
     $r->print(encode_json(\%out));
-  } elsif ($OUTPUT_FORMAT eq "kml") {
+  } else {
     $error_result = 400;
   }
 
+}
+
+################################################################################
+sub get_time_added
+################################################################################
+{
+  my ($id) = @_;
+  my $out = "nic";
+
+  wsyslog('info', "get_time_added($id)");
+
+  my $query = "select sqltime from time where gp_id=?";
+  my $sth = $dbh->prepare($query);
+  $sth->execute($id);
+
+  my @row = $sth->fetchrow_array() or do {
+    if ($sth->err) {
+      wsyslog("info", "get_time_added dberror " . $DBI::errstr . " q: $query");
+      $error_result = 400;
+      return;
+    } else {
+      wsyslog("info", "get_time_added dberror empty q: $query");
+      $error_result = 404;
+      return;
+    }
+    $error_result = 400;
+    return;
+  };
+
+  $out = $row[0];
+  $r->print($row[0]);
+}
+
+################################################################################
+sub get_time_taken
+################################################################################
+{
+  my ($id) = @_;
+  wsyslog('info', "get_time_taken($id)");
+  my $out = &get_exif_data($id, "EXIF", "Create Date");
+  $r->print($out);
 }
 
 1;
