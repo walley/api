@@ -200,7 +200,7 @@ sub handler
 
   wsyslog('info', "request to $hostname from $remote_ip by $user");
   wsyslog('info', "ver. $api_version: $api_request, method " . $r->method());
-  wsyslog('info', "output " . $OUTPUT_FORMAT . ", limit " . $LIMIT);
+  wsyslog('info', "output " . $OUTPUT_FORMAT . ", limit " . $LIMIT. ", offset " . $OFFSET);
   if ($PROJECT ne "") {
     wsyslog('info', "project " . $PROJECT . "id is " . $PROJECTID);
   }
@@ -737,14 +737,10 @@ sub show_by_name
 }
 
 ################################################################################
-sub show_by
+sub add_uri_params()
 ################################################################################
 {
-  my ($val, $what) = @_;
-
-  wsyslog('info', "show_by($val, $what)");
-
-  my $query = "select * from guidepost where $what='$val' ";
+  my $query = shift;
 
   if ($BBOX) {
     $query .= " and ".&add_bbox();
@@ -757,6 +753,22 @@ sub show_by
   if ($OFFSET) {
     $query .= " offset " . $OFFSET;
   }
+
+  return $query;
+}
+
+################################################################################
+sub show_by
+################################################################################
+{
+  my ($val, $what) = @_;
+
+  wsyslog('info', "show_by($val, $what)");
+
+  my $query = "select * from guidepost where $what='$val' ";
+
+
+  $query = &add_uri_params($query);
 
   $error_result = &output_data($query);
 }
@@ -779,9 +791,7 @@ sub hashtag
     wsyslog("info", "hashtag bad? ($tag)");
   }
 
-  if ($BBOX) {
-    $query .= " and ".&add_bbox();
-  }
+  $query = &add_uri_params($query);
 
   wsyslog("info", "hashtag query:" . $query . "(k:v)" . "($k:$v)");
 
