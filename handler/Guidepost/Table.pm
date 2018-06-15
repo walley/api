@@ -299,7 +299,8 @@ sub handler
   } elsif ($api_request eq "timetaken") {
     &get_time_taken($uri_components[3]);
   } elsif ($api_request eq "project") {
-    &add_to_project(10,1);
+    &list_projects();
+#    &add_to_project(10,1);
   } else {
     wsyslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -762,13 +763,22 @@ sub show_by
 ################################################################################
 {
   my ($val, $what) = @_;
+  my $query;
 
   wsyslog('info', "show_by($val, $what)");
 
-  my $query = "select * from guidepost where $what='$val' ";
+  if ($PROJECT ne "") {
+    #project query
+    $query = "select * from guidepost,prjgp where guidepost.id=prjgp.gp_id and prjgp.prj_id=2 and guidepost.$what='$val'";
+  } else {
+    $query = "select * from guidepost where $what='$val' ";
+  }
 
+  wsyslog('info', "show_by $query");
 
   $query = &add_uri_params($query);
+
+  wsyslog('info', "show_by $query");
 
   $error_result = &output_data($query);
 }
@@ -1007,11 +1017,11 @@ sub output_html
       $prevoffset = 0;
     }
 
-    $prev = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset;
-    $next = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset;
-    $out .= "<a href='$prev'><- prev</a>";
+    $prev = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset . &project_uri_param();
+    $next = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset . &project_uri_param();
+    $out .= "<a href='$prev'>&lt;- prev</a>";
     $out .= " | ";
-    $out .= "<a href='$next'>next -></a><br>\n";
+    $out .= "<a href='$next'>next -&gt;</a><br>\n";
   }
 
   $out .= "<!-- user is $user -->\n";
@@ -2624,5 +2634,53 @@ sub remove_from_project
 ################################################################################
 {
 }
+
+################################################################################
+sub project_uri_param
+################################################################################
+{
+  my $r;
+  if ($PROJECT ne "") {
+    $r = "&project=$PROJECT";
+  } else {
+    $r = "";
+  }
+  return $r;
+}
+
+################################################################################
+sub resolve_project_id()
+################################################################################
+{
+  my $id = shift;
+  my $query = "select name from project where id=?";
+  my $sth = $dbh->prepare($query);
+  my $rv = $sth->execute($id) or do {
+  };
+  my @row = $sth->fetchrow_array();
+  return $row[0];
+}
+
+################################################################################
+sub list_projects()
+################################################################################
+{
+  my $out = "";
+  my $id = shift;
+
+  my $query = "select name from project";
+  my $sth = $dbh->prepare($query);
+  my $row = $sth->execute() or do {
+    wsyslog("info", "500: list_projects(): dberror:" . $DBI::errstr . " q: $query");
+    $error_result = 500;
+    return;
+  };
+  while (@row = $sth->fetchrow_array()) {
+    wsyslog("info", $row[0] . " q: $query");
+    $out .= $row[0] . "\n";
+  }
+  $r->print($out);
+}
+
 
 1;
