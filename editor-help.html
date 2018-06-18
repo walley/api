@@ -99,18 +99,20 @@
 
       <li><b>timeadded</b>
         <dl>
-          </dt>typ volani GET</dt>
+          <dt>typ volani GET</dt>
           <dd><a href='http://api.openstreetmap.cz/table/timeadded/14000?output=html'>example</a></dd>
           <dt>parametry: id</dt>
           <dd> zobrazi cas pridani fotky, pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
         </dl>
       <li>timetaken
-        <br>typ volani GET
-        <br><a href='http://api.openstreetmap.cz/table/timetaken/100?output=html'>example</a></p>
-        <br>parametry: id
-        <p> zobrazi cas vyfoceni z exifu pokud je znam, format zatim pouze 2017-07-17 15:58:39</p>
+        <dl>
+          <dt>typ volani GET</dt>
+          <dd><a href='http://api.openstreetmap.cz/table/timetaken/100?output=html'>example</a></dd>
+          <dt>parametry: id</dt>
+          <dd> zobrazi cas vyfoceni z exifu pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
+        </dl>
 
-<li><b>project/nazev/foto</b>
+<li><b>project/nazev TBD</b>
 <dl>
 <dt>GET</dt>
 <dd>vrati seznam fotek v projektu</dd>
@@ -118,7 +120,16 @@
 <dd>prida fotku do projektu</dd>
 <dt>DELETE</dt>
 <dd>smaze fotku z projektu</dd>
-<dd>xx</dd>
+</dl>
+
+<li><b>projectlist</b>
+<dl>
+<dt>GET</dt>
+<dd>vrati seznam projektu</dd>
+<dt>POST</dt>
+<dd>prida projekt</dd>
+<dt>DELETE</dt>
+<dd>smaze projekt</dd>
 </dl>
 
     </ul>

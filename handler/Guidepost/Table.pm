@@ -128,8 +128,11 @@ sub handler
 
   $user = $ENV{REMOTE_USER};
   $is_https = $ENV{HTTPS};
+  $referrer = $ENV{HTTP_REFERER};
 
   openlog('guidepostapi', 'cons,pid', 'user');
+
+  wsyslog('info', 'referrer:' . $referrer);
 
   if (&check_ban()) {
     wsyslog('info', 'access denied:' . $remote_ip);
@@ -230,6 +233,8 @@ sub handler
     if ($post_data{lname} ne "" ) {
       $user = $post_data{lname};
       wsyslog('info', "osmcz username: $user");
+    } else {
+      wsyslog('info', "no osmcz username provided");
     }
     &move_photo($post_data{id}, $post_data{lat}, $post_data{lon});
   } elsif ($api_request eq "isedited") {
@@ -298,9 +303,28 @@ sub handler
     &get_time_added($uri_components[3]);
   } elsif ($api_request eq "timetaken") {
     &get_time_taken($uri_components[3]);
+  } elsif ($api_request eq "projectlist") {
+    if ($r->method() eq "GET") {
+      #get - list
+      &list_projects();
+    } elsif ($r->method() eq "POST") {
+      #post - add
+      #&add_to_project(10,1);
+    } elsif ($r->method() eq "DELETE") {
+      #delete - remove
+      #&remove_project();
+    }
   } elsif ($api_request eq "project") {
-    &list_projects();
-#    &add_to_project(10,1);
+    if ($r->method() eq "GET") {
+      #get - list of photos, probably ids
+    } elsif ($r->method() eq "POST") {
+      #post - add photo to project
+    } elsif ($r->method() eq "DELETE") {
+      #delete - remove photo from project
+    }
+  } elsif ($api_request eq "resolve") {
+    my $out = &resolve_project_id($uri_components[3]);
+    $r->print($out);
   } else {
     wsyslog('info', "unknown request: $uri");
     $error_result = 400;
@@ -458,7 +482,7 @@ sub output_all()
   my $query;
 
   if ($PROJECT ne "") {
-    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=1;";
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=2;";
   } else {
     $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
   }
@@ -647,7 +671,7 @@ sub parse_post_data
 
   #sanitize
   foreach (sort keys %post_data) {
-    wsyslog('info', "postdata before:" . $_ . "=" . $post_data{$_});
+#    wsyslog('debug', "postdata before:" . $_ . "=" . $post_data{$_});
     $post_data{$_} = &smartdecode($post_data{$_});
     $post_data{$_} =~ s/\+/ /g;
     $post_data{$_} =~ s/\%2F/\//g;
@@ -867,11 +891,6 @@ sub output_kml
 
   my ($query) = @_;
   my $out = "";
-
-#  $res = $dbh->selectall_arrayref($query) or do {
-#    wsyslog('info', "output_kml: select err " . $DBI::errstr);
-#    return Apache2::Const::SERVER_ERROR;
-#  };
 
   my $style = q(
  <Style id="guidepost">
@@ -1777,8 +1796,7 @@ sub move_photo()
   my $query = "insert into changes (gp_id, col, value, action) values (?, ?, ?, 'position')";
   $old_lat = &get_gp_column_value($id, "lat");
   $old_lon = &get_gp_column_value($id, "lon");
-  wsyslog('info', $remote_ip . " wants to move id:$id, from $old_lat, $old_lon to '$lat', '$lon'");
-  wsyslog('info', $remote_ip . $query);
+  wsyslog('info', $remote_ip . " wants to move id:$id, from '$old_lat', '$old_lon' to '$lat', '$lon'");
 
   my $res = $dbh->do($query, undef, $id, $lat, $lon) or do {
     wsyslog("info", "500: move_photo($id, $lat, $lon): dbi error " . $DBI::errstr);
@@ -2652,11 +2670,25 @@ sub project_uri_param
 sub resolve_project_id()
 ################################################################################
 {
-  my $id = shift;
-  my $query = "select name from project where id=?";
+  my $what = shift;
+  my $query;
+
+  if (looks_like_number($what)) {
+    wsyslog('info', "id to name");
+    $query = "select name from project where id=?";
+  } else {
+    wsyslog('info', "name to id");
+    $query = "select id from project where name=?";
+  }
+
   my $sth = $dbh->prepare($query);
-  my $rv = $sth->execute($id) or do {
+  my $rv = $sth->execute($what) or do {
+    wsyslog('info', "500: resolve, query:" . $query);
+    $error_result = 500;
+    return;
   };
+
+  wsyslog('info', "resolve: " . $what .",". $query .",". $row[0] . ".");
   my @row = $sth->fetchrow_array();
   return $row[0];
 }
@@ -2669,16 +2701,21 @@ sub list_projects()
   my $id = shift;
 
   my $query = "select name from project";
-  my $sth = $dbh->prepare($query);
-  my $row = $sth->execute() or do {
+
+  my $res = $dbh->selectall_arrayref($query) or do {
     wsyslog("info", "500: list_projects(): dberror:" . $DBI::errstr . " q: $query");
     $error_result = 500;
     return;
   };
-  while (@row = $sth->fetchrow_array()) {
-    wsyslog("info", $row[0] . " q: $query");
-    $out .= $row[0] . "\n";
+
+  if ($OUTPUT_FORMAT eq "json"){
+    $out .= encode_json($res);
+  } else {
+    foreach my $i (@$res) {
+      $out .= @$i[0]."\n";
+    };
   }
+
   $r->print($out);
 }
 
