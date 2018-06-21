@@ -464,7 +464,7 @@ sub sequence()
   for (my $i = 0; $i < 1000; $i++) {
     $out .= "<li> $i: $seq$i ";
     my $zeropadi = sprintf("%03d", $i);
-    $out .= "<a href='http://" . $hostname . "/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
+    $out .= "<a href='$https://" . $hostname . "/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
     if (&tag_query("ref",$seq.$i)) {
     $out .= " - DB ";
     }
@@ -482,23 +482,13 @@ sub output_all()
   my $query;
 
   if ($PROJECT ne "") {
-    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=2;";
+    $prj_id = &get_project_id($PROJECT);
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=$prj_id";
   } else {
     $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
   }
 
-  if ($BBOX) {
-    $query .= " where " . &add_bbox();
-  }
-
-  if ($LIMIT) {
-    $query .= " limit " . $LIMIT;
-  }
-
-  if ($OFFSET) {
-    $query .= " offset " . $OFFSET;
-  }
-
+  $query = &add_uri_params_to_query($query);
   &output_data($query);
 }
 
@@ -652,6 +642,8 @@ sub parse_query_string
       $get_data{$_} =~ s/[^A-Za-z0-9\.,-]//g;
     } elsif ($_ =~ /output/i ) {
       $get_data{$_} =~ s/[^A-Za-z0-9\.,-\/]//g;
+    } elsif ($_ =~ /project/i ) {
+      $get_data{$_} =~ s/[^A-Za-z0-9]//g;
     } else {
       $get_data{$_} =~ s/[^A-Za-z0-9 ]//g;
     }
@@ -762,7 +754,7 @@ sub show_by_name
 }
 
 ################################################################################
-sub add_uri_params()
+sub add_uri_params_to_query()
 ################################################################################
 {
   my $query = shift;
@@ -800,7 +792,7 @@ sub show_by
 
   wsyslog('info', "show_by $query");
 
-  $query = &add_uri_params($query);
+  $query = &add_uri_params_to_query($query);
 
   wsyslog('info', "show_by $query");
 
@@ -825,7 +817,7 @@ sub hashtag
     wsyslog("info", "hashtag bad? ($tag)");
   }
 
-  $query = &add_uri_params($query);
+  $query = &add_uri_params_to_query($query);
 
   wsyslog("info", "hashtag query:" . $query . "(k:v)" . "($k:$v)");
 
@@ -990,6 +982,54 @@ sub output_gpx
 }
 
 ################################################################################
+sub output_html_pager()
+################################################################################
+{
+  my $out = "";
+
+  if ($LIMIT == 0) {
+    $LIMIT = 5;
+  }
+
+  $nextoffset = $OFFSET + $LIMIT;
+  $prevoffset = $OFFSET - $LIMIT;
+
+  if ($prevoffset < 0) {
+    $prevoffset = 0;
+  }
+
+#lol
+  $prev = &get_protocol()."://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=" . $LIMIT . "&offset=" . $prevoffset . &project_uri_param();
+  $next = &get_protocol()."://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=" . $LIMIT . "&offset=" . $nextoffset . &project_uri_param();
+
+  $lm = $LIMIT - 1;
+  if ($lm < 1) {
+    $lm = 1;
+  }
+
+  $lp = $LIMIT + 1;
+#no check ....
+#  if ($lp > ??????) {
+#    $lm = 1;
+#  }
+
+#lolx2
+  $limit_plus  = &get_protocol()."://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=" . $lp . "&offset=" . $OFFSET . &project_uri_param();
+  $limit_minus = &get_protocol()."://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=" . $lm . "&offset=" . $OFFSET . &project_uri_param();
+
+  $out .= "<a href='$prev'>&lt;- prev</a>";
+  $out .= " | ";
+  $out .= "<a href='$next'>next -&gt;</a>\n";
+  $out .= " limit ";
+  $out .= "<a href='" . $limit_plus . "'>[+]</a>";
+  $out .= "<a href='" . $limit_minus . "'>[-]</a>";
+
+  $out .= "\n<br>";
+
+  return $out;
+}
+
+################################################################################
 sub output_html
 ################################################################################
 {
@@ -1028,28 +1068,33 @@ sub output_html
     return Apache2::Const::NOT_FOUND;
   }
 
-  if ($num_elements > 5 or $OFFSET or $LIMIT) {
-    $nextoffset = $OFFSET + 5;
-    $prevoffset = $OFFSET - 5;
+  $out .= &output_html_pager();
 
-    if ($prevoffset < 0) {
-      $prevoffset = 0;
-    }
+#  if ($num_elements > 5 or $OFFSET or $LIMIT) {
+#    $nextoffset = $OFFSET + 5;
+#    $prevoffset = $OFFSET - 5;
+#
+#    if ($prevoffset < 0) {
+#      $prevoffset = 0;
+#    }
+#
+#    $prev = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset . &project_uri_param();
+#    $next = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset . &project_uri_param();
+#    $out .= "<a href='$prev'>&lt;- prev</a>";
+#    $out .= " | ";
+#    $out .= "<a href='$next'>next -&gt;</a><br>\n";
+#  }
 
-    $prev = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $prevoffset . &project_uri_param();
-    $next = "$https://" . $hostname . "/" . $api_version . "/" . $api_request . "/" . $api_param . "?limit=5&offset=" . $nextoffset . &project_uri_param();
-    $out .= "<a href='$prev'>&lt;- prev</a>";
-    $out .= " | ";
-    $out .= "<a href='$next'>next -&gt;</a><br>\n";
+  if ($PROJECT ne "") {
+    $out .= "<h1>projekt: $PROJECT</h1>\n";
   }
 
   $out .= "<!-- user is $user -->\n";
 
-#//aimplement some kind of all
   my $counter = 0;
 
   foreach my $row (@$res) {
-    if ($counter > 4) {
+    if ($counter > $LIMIT - 1) {
       last;
     }
     my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license) = @$row;
@@ -1058,8 +1103,13 @@ sub output_html
     $counter++;
   }
 
-  $out .= "<script>wheelzoom(document.querySelectorAll('img'));</script>";
+#  wheelzoom disabled
+#  $out .= "<script>wheelzoom(document.querySelectorAll('img'));</script>";
+
   $out .= &init_inplace_edit();
+
+  $out .= &output_html_pager();
+
   $out .= &page_footer();
 
   $r->print($out);
@@ -2667,7 +2717,20 @@ sub project_uri_param
 }
 
 ################################################################################
-sub resolve_project_id()
+sub get_project_id()
+################################################################################
+{
+  my $what = shift;
+
+  if (looks_like_number($what)) {
+    return $what;
+  } else {
+    return &resolve_project($what);
+  }
+}
+
+################################################################################
+sub resolve_project()
 ################################################################################
 {
   my $what = shift;
@@ -2694,6 +2757,17 @@ sub resolve_project_id()
 }
 
 ################################################################################
+sub get_protocol()
+################################################################################
+{
+  if ($is_https) {
+    $https = "https";
+  } else {
+    $https = "http";
+  }
+}
+
+################################################################################
 sub list_projects()
 ################################################################################
 {
@@ -2710,6 +2784,20 @@ sub list_projects()
 
   if ($OUTPUT_FORMAT eq "json"){
     $out .= encode_json($res);
+  } elsif ($OUTPUT_FORMAT eq "html"){
+    $out .= &page_header();
+    $out .= "<ol>\n";
+    foreach my $i (@$res) {
+      $out .= "<li>\n";
+      my $prj_name = @$i[0]."\n";
+      my $url = &get_protocol() . "://" . $hostname . "/" . $api_version . "/" . "all" . "?project=" . $prj_name;
+      $out .= "<a href='$url'>\n";
+      $out .= $prj_name."\n";
+      $out .= "</a>\n";
+    };
+    $out .= "</ol>\n";
+    $out .= &page_footer();
+
   } else {
     foreach my $i (@$res) {
       $out .= @$i[0]."\n";
