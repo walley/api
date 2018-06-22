@@ -309,7 +309,8 @@ sub handler
       &list_projects();
     } elsif ($r->method() eq "POST") {
       #post - add
-      #&add_to_project(10,1);
+      &debug_postdata();
+      &add_project($post_data{add});
     } elsif ($r->method() eq "DELETE") {
       #delete - remove
       #&remove_project();
@@ -483,12 +484,13 @@ sub output_all()
 
   if ($PROJECT ne "") {
     $prj_id = &get_project_id($PROJECT);
-    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=$prj_id";
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g,prjgp where g.id=prjgp.gp_id and prjgp.prj_id=$prj_id ";
+    $query = &add_uri_params_to_query($query);
   } else {
-    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g";
+    $query = "select g.*, (select GROUP_CONCAT(k||':'||v, ';') from tags t where t.gp_id = g.id) from guidepost g ";
+    $query = &add_uri_params_to_query($query, 1);
   }
 
-  $query = &add_uri_params_to_query($query);
   &output_data($query);
 }
 
@@ -652,6 +654,15 @@ sub parse_query_string
 }
 
 ################################################################################
+sub debug_postdata
+################################################################################
+{
+  foreach (sort keys %post_data) {
+    wsyslog('debug', "postdata:" . $_ . "=" . $post_data{$_});
+  }
+}
+
+################################################################################
 sub parse_post_data
 ################################################################################
 {
@@ -757,10 +768,18 @@ sub show_by_name
 sub add_uri_params_to_query()
 ################################################################################
 {
-  my $query = shift;
+  my ($query, $add_where) = @_;
+
 
   if ($BBOX) {
-    $query .= " and ".&add_bbox();
+
+    if ($add_where) {
+      $query .= " where ";
+    } else {
+      $query .= " and ";
+    }
+
+    $query .= " ".&add_bbox();
   }
 
   if ($LIMIT) {
@@ -2807,5 +2826,17 @@ sub list_projects()
   $r->print($out);
 }
 
+
+################################################################################
+sub add_project()
+################################################################################
+{
+  my $what = shift;
+
+  wsyslog("info", "add $what");
+
+#insert into project blah
+
+}
 
 1;
