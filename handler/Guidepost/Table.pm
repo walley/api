@@ -313,11 +313,13 @@ sub handler
       &add_project($post_data{add});
     } elsif ($r->method() eq "DELETE") {
       #delete - remove
-      #&remove_project();
+      &debug_postdata();
+      &remove_project($uri_components[3]);
     }
   } elsif ($api_request eq "project") {
     if ($r->method() eq "GET") {
       #get - list of photos, probably ids
+      &list_assigned($uri_components[3]);
     } elsif ($r->method() eq "POST") {
       #post - add photo to project
     } elsif ($r->method() eq "DELETE") {
@@ -334,7 +336,6 @@ sub handler
 #Dumper(\%ENV);
 #    connection_info($r->connection);
 #    $r->send_http_header;   # Now send the http headers.
-
 
   $dbh->disconnect;
 
@@ -772,7 +773,6 @@ sub add_uri_params_to_query()
 
 
   if ($BBOX) {
-
     if ($add_where) {
       $query .= " where ";
     } else {
@@ -2164,6 +2164,18 @@ sub db_do
 }
 
 ################################################################################
+sub db_do2
+################################################################################
+{
+  my ($query, $param) = @_;
+
+  $res = $dbh->do($query, undef, $param) or do {
+    wsyslog("info", "500: db_do(): dberror:" . $DBI::errstr . " q: $query");
+    $error_result = 500;
+  };
+}
+
+################################################################################
 sub approve_edit
 ################################################################################
 {
@@ -2736,7 +2748,7 @@ sub project_uri_param
 }
 
 ################################################################################
-sub get_project_id()
+sub get_project_id
 ################################################################################
 {
   my $what = shift;
@@ -2749,7 +2761,7 @@ sub get_project_id()
 }
 
 ################################################################################
-sub resolve_project()
+sub resolve_project
 ################################################################################
 {
   my $what = shift;
@@ -2776,7 +2788,7 @@ sub resolve_project()
 }
 
 ################################################################################
-sub get_protocol()
+sub get_protocol
 ################################################################################
 {
   if ($is_https) {
@@ -2787,7 +2799,7 @@ sub get_protocol()
 }
 
 ################################################################################
-sub list_projects()
+sub list_projects
 ################################################################################
 {
   my $out = "";
@@ -2828,14 +2840,75 @@ sub list_projects()
 
 
 ################################################################################
-sub add_project()
+sub add_project
 ################################################################################
 {
   my $what = shift;
 
   wsyslog("info", "add $what");
 
-#insert into project blah
+  my $query = "insert into project (id, name) values (null, ?)";
+  wsyslog('info', "add project " . $query);
+  &db_do2($query, $what);
+}
+
+################################################################################
+sub remove_project
+################################################################################
+{
+  my $what = shift;
+
+  my $query = "delete from project where id = ?";
+  wsyslog("info", "del $what $query");
+
+}
+
+################################################################################
+sub is_assigned
+################################################################################
+{
+  my ($gp_id, $prj_id) = @_;
+  my $query = "select * from prjgp values where gpid=? and prjid=?";
+}
+
+################################################################################
+sub assign_to_project
+################################################################################
+{
+  my ($gp_id, $prj_id) = @_;
+  my $query = "insert into prjgp values (?, ?)";
+  if (!is_assigned($gp_id, $prj_id)){
+  }
+}
+
+################################################################################
+sub remove_from_project
+################################################################################
+{
+  my ($img_id, $prj_id) = @_;
+  my $query = "delete from project where id = ?";
+}
+
+################################################################################
+sub list_assigned
+################################################################################
+{
+  my ($prj_id) = @_;
+  my $out = "";
+  my $query = "select * from  guidepost,prjgp where prjgp.prj_id=? and guidepost.id=prjgp.gp_id;";
+
+  my $res = $sth->selectall_arrayref($query, undef, 2) or do {
+    wsyslog("info", "list_assigned db error" . $DBI::errstr);
+    $out = "list_assigned: DB error";
+    $error_result = 500;
+    return 500;
+  };
+
+  foreach my $row (@$res) {
+    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license) = @$row;
+    $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license);
+    $out .=  "</p>\n";
+  }
 
 }
 
