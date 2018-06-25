@@ -2895,9 +2895,12 @@ sub list_assigned
 {
   my ($prj_id) = @_;
   my $out = "";
-  my $query = "select * from  guidepost,prjgp where prjgp.prj_id=? and guidepost.id=prjgp.gp_id;";
+  my $query = "select guidepost.id, guidepost.url from  guidepost,prjgp where prjgp.prj_id=? and guidepost.id=prjgp.gp_id;";
 
-  my $res = $sth->selectall_arrayref($query, undef, 2) or do {
+  wsyslog("info", "list_assigned prj_id:" . $prj_id);
+
+
+  my $res = $dbh->selectall_arrayref($query, undef, 2) or do {
     wsyslog("info", "list_assigned db error" . $DBI::errstr);
     $out = "list_assigned: DB error";
     $error_result = 500;
@@ -2905,9 +2908,17 @@ sub list_assigned
   };
 
   foreach my $row (@$res) {
-    my ($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license) = @$row;
-    $out .= &gp_line($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license);
-    $out .=  "</p>\n";
+    my ($id, $url) = @$row;
+    $out .=  "$id $url\n";
+  }
+
+  if ($OUTPUT_FORMAT eq "html") {
+    $r->print($out);
+  } elsif ($OUTPUT_FORMAT eq "json") {
+    $out = encode_json($res);
+    $r->print($out);
+  } else {
+    $r->print($out);
   }
 
 }
