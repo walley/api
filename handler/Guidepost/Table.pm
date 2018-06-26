@@ -322,6 +322,7 @@ sub handler
       &list_assigned($uri_components[3]);
     } elsif ($r->method() eq "POST") {
       #post - add photo to project
+      assign_to_project($post_data{gp_id}, $post_data{project});
     } elsif ($r->method() eq "DELETE") {
       #delete - remove photo from project
     }
@@ -2767,6 +2768,13 @@ sub resolve_project
   my $what = shift;
   my $query;
 
+  if (!$what) {
+    wsyslog('info', "resolve: no param.");
+    return;
+  }
+
+  wsyslog('info', "resolve: what" . $what . ".");
+
   if (looks_like_number($what)) {
     wsyslog('info', "id to name");
     $query = "select name from project where id=?";
@@ -2782,9 +2790,15 @@ sub resolve_project
     return;
   };
 
-  wsyslog('info', "resolve: " . $what .",". $query .",". $row[0] . ".");
   my @row = $sth->fetchrow_array();
-  return $row[0];
+  $count = scalar @row;
+  if ($count) {
+    wsyslog('info', "resolve: $count" . $what .",". $query .",". $row[0] . ".");
+    return $row[0];
+  } else {
+    wsyslog('info', "resolve: nothing found");
+    return;
+  }
 }
 
 ################################################################################
@@ -2875,9 +2889,20 @@ sub is_assigned
 sub assign_to_project
 ################################################################################
 {
-  my ($gp_id, $prj_id) = @_;
+  my ($gp_id, $project) = @_;
+
+  my $prj_id = &resolve_project($project);
+
+  if (!defined $prj_id) {
+    wsyslog("info", "undefined ");
+    $error_result = 412;
+    return;
+  }
+
+  wsyslog("info", "assign $gp_id to $project id $prj_id ");
+
   my $query = "insert into prjgp values (?, ?)";
-  if (!is_assigned($gp_id, $prj_id)){
+  if (!is_assigned($gp_id, $prj_id)) {
   }
 }
 
