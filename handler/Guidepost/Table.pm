@@ -2416,7 +2416,11 @@ sub add_tags()
   $query = "insert into changes (gp_id, col, value, action) values ($id, '$k', '$v', 'addtag')";
 
 
-  my $sth = $dbh->prepare($query);
+  my $sth = $dbh->prepare($query) or do {
+    wsyslog("info", "500: add_tags($tag): prepare dbi error " . $DBI::errstr);
+    $error_result = 500;
+  };
+
   my $res = $sth->execute() or do {
     wsyslog("info", "500: add_tags($tag): dbi error " . $DBI::errstr);
     $error_result = 500;
@@ -2773,7 +2777,7 @@ sub resolve_project
     return;
   }
 
-  wsyslog('info', "resolve: what" . $what . ".");
+  wsyslog('info', "resolving " . $what . ".");
 
   if (looks_like_number($what)) {
     wsyslog('info', "id to name");
@@ -2793,10 +2797,10 @@ sub resolve_project
   my @row = $sth->fetchrow_array();
   $count = scalar @row;
   if ($count) {
-    wsyslog('info', "resolve: $count" . $what .",". $query .",". $row[0] . ".");
+    wsyslog('info', "resolved: " . $row[0] . ".");
     return $row[0];
   } else {
-    wsyslog('info', "resolve: nothing found");
+    wsyslog('info', "resolved: nothing found");
     return;
   }
 }
@@ -2882,7 +2886,23 @@ sub is_assigned
 ################################################################################
 {
   my ($gp_id, $prj_id) = @_;
-  my $query = "select * from prjgp values where gpid=? and prjid=?";
+  my $query = "select * from prjgp where gp_id=? and prj_id=?";
+
+  wsyslog("debug", "is_assigned $gp_id, $prj_id");
+
+  my $sth = $dbh->prepare($query)  or do {
+    wsyslog("info", "500: is_assigned($gp_id, $prj_id): prepare dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
+  my $rv = $sth->execute($gp_id, $prj_id) or do {
+    wsyslog("info", "500: is_assigned($gp_id, $prj_id): execute dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
+
+  my @row = $sth->fetchrow_array();
+  return (scalar @row > 0);
 }
 
 ################################################################################
@@ -2890,8 +2910,10 @@ sub assign_to_project
 ################################################################################
 {
   my ($gp_id, $project) = @_;
-
   my $prj_id = &resolve_project($project);
+  my $query = "insert into prjgp values (null, ?, ?)";
+
+  wsyslog("info", "trying assign_to_project($gp_id, $project)");
 
   if (!defined $prj_id) {
     wsyslog("info", "undefined ");
@@ -2901,8 +2923,15 @@ sub assign_to_project
 
   wsyslog("info", "assign $gp_id to $project id $prj_id ");
 
-  my $query = "insert into prjgp values (?, ?)";
-  if (!is_assigned($gp_id, $prj_id)) {
+  if (!&is_assigned($gp_id, $prj_id)) {
+    wsyslog("info", "doing ($gp_id, $project)");
+    my $res = $dbh->do($query, undef, $gp_id, $prj_id) or do {
+      wsyslog("info", "500: assign_to_project($gp_id, $project): dbi error " . $DBI::errstr);
+      $error_result = 500;
+      return;
+    };
+  } else {
+    wsyslog("info", "is_assigned, not doing anything ");
   }
 }
 
@@ -2918,14 +2947,16 @@ sub remove_from_project
 sub list_assigned
 ################################################################################
 {
-  my ($prj_id) = @_;
+  my ($project) = @_;
   my $out = "";
   my $query = "select guidepost.id, guidepost.url from  guidepost,prjgp where prjgp.prj_id=? and guidepost.id=prjgp.gp_id;";
+
+  $prj_id = &resolve_project($project);
 
   wsyslog("info", "list_assigned prj_id:" . $prj_id);
 
 
-  my $res = $dbh->selectall_arrayref($query, undef, 2) or do {
+  my $res = $dbh->selectall_arrayref($query, undef, $prj_id) or do {
     wsyslog("info", "list_assigned db error" . $DBI::errstr);
     $out = "list_assigned: DB error";
     $error_result = 500;
