@@ -305,15 +305,11 @@ sub handler
     &get_time_taken($uri_components[3]);
   } elsif ($api_request eq "projectlist") {
     if ($r->method() eq "GET") {
-      #get - list
       &list_projects();
     } elsif ($r->method() eq "POST") {
-      #post - add
       &debug_postdata();
       &add_project($post_data{add});
     } elsif ($r->method() eq "DELETE") {
-      #delete - remove
-      &debug_postdata();
       &remove_project($uri_components[3]);
     }
   } elsif ($api_request eq "project") {
@@ -324,6 +320,8 @@ sub handler
       #post - add photo to project
       assign_to_project($post_data{gp_id}, $post_data{project});
     } elsif ($r->method() eq "DELETE") {
+      &debug_postdata();
+      remove_from_project($post_data{gp_id}, $post_data{project})
       #delete - remove photo from project
     }
   } elsif ($api_request eq "resolve") {
@@ -1344,12 +1342,7 @@ sub static_map()
 
   $static_map = "https://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$lat,$lon&zoom=15&size=200,200&type=map&imagetype=png&pois=x,$lat,$lon";
 #  $out .=  "<img src='http://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lon&zoom=14&size=200x200&maptype=mapnik&markers=$lat,$lon,lightblue1' />";
-
-#  $out .=  "<span class='staticmap'>\n";
-#  $out .=  "<span>\n";
-  $out .=  "<img class='zoom' src='".$static_map."'/>";
-#  $out .=  "</span>\n";
-
+  $out .=  "<img src='".$static_map."'/>";
   return $out;
 }
 
@@ -2734,12 +2727,6 @@ sub add_to_project
 }
 
 ################################################################################
-sub remove_from_project
-################################################################################
-{
-}
-
-################################################################################
 sub project_uri_param
 ################################################################################
 {
@@ -2874,11 +2861,43 @@ sub add_project
 sub remove_project
 ################################################################################
 {
-  my $what = shift;
+  my $project = shift;
+  my $prj_id = &resolve_project($project);
 
   my $query = "delete from project where id = ?";
-  wsyslog("info", "del $what $query");
 
+  wsyslog("info", "del $project $prj_id $query");
+
+  my $res = $dbh->do($query, undef, $prj_id) or do {
+    wsyslog("info", "500: remove_project($gp_id, $project): dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
+
+}
+
+################################################################################
+sub project_image_count
+################################################################################
+{
+  my ($prj_id) = @_;
+  my $query = "select count(*) from prjgp where prj_id=?";
+
+  wsyslog("debug", "project_image_count, $prj_id");
+
+  my $sth = $dbh->prepare($query)  or do {
+    wsyslog("info", "500: project_image_count($prj_id): prepare dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
+  my $rv = $sth->execute($gp_id, $prj_id) or do {
+    wsyslog("info", "500: project_image_count($prj_id): execute dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
+
+  my @row = $sth->fetchrow_array();
+  return $row[0];
 }
 
 ################################################################################
@@ -2939,8 +2958,24 @@ sub assign_to_project
 sub remove_from_project
 ################################################################################
 {
-  my ($img_id, $prj_id) = @_;
-  my $query = "delete from project where id = ?";
+  my ($gp_id, $project) = @_;
+  my $prj_id = &resolve_project($project);
+
+  wsyslog("info", "trying to reomve $gp_id from $project ($prj_id)");
+
+  if (!defined $prj_id) {
+    wsyslog("info", "undefined ");
+    $error_result = 412;
+    return;
+  }
+
+  my $query = "delete from prjgp where gp_id=? and prj_id=?";
+
+  my $res = $dbh->do($query, undef, $gp_id, $prj_id) or do {
+    wsyslog("info", "500: remove_from_project($gp_id, $project): dbi error " . $DBI::errstr);
+    $error_result = 500;
+    return;
+  };
 }
 
 ################################################################################

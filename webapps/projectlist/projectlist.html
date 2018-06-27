@@ -32,7 +32,7 @@ function xxdelete()
 $.ajax({
     url: 'http://api.openstreetmap.cz/table/projectlist',
     method: 'DELETE',
-    data: { name: "John", location: "Boston" },
+    data: { project: term},
     success: function(result) {
         // handle success
     },
