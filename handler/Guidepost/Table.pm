@@ -310,7 +310,7 @@ sub handler
       &debug_postdata();
       &add_project($post_data{add});
     } elsif ($r->method() eq "DELETE") {
-      &remove_project($uri_components[3]);
+      &remove_project($post_data{project});
     }
   } elsif ($api_request eq "project") {
     if ($r->method() eq "GET") {
@@ -2864,6 +2864,12 @@ sub remove_project
   my $project = shift;
   my $prj_id = &resolve_project($project);
 
+  if (&project_image_count($prj_id)) {
+    wsyslog("info", "del $project $prj_id not empty");
+    $error_result = 412;
+    return;
+  }
+
   my $query = "delete from project where id = ?";
 
   wsyslog("info", "del $project $prj_id $query");
@@ -2883,20 +2889,21 @@ sub project_image_count
   my ($prj_id) = @_;
   my $query = "select count(*) from prjgp where prj_id=?";
 
-  wsyslog("debug", "project_image_count, $prj_id");
+  wsyslog("debug", "project_image_count id:$prj_id");
 
   my $sth = $dbh->prepare($query)  or do {
     wsyslog("info", "500: project_image_count($prj_id): prepare dbi error " . $DBI::errstr);
     $error_result = 500;
     return;
   };
-  my $rv = $sth->execute($gp_id, $prj_id) or do {
+  my $rv = $sth->execute($prj_id) or do {
     wsyslog("info", "500: project_image_count($prj_id): execute dbi error " . $DBI::errstr);
     $error_result = 500;
     return;
   };
 
   my @row = $sth->fetchrow_array();
+  wsyslog("debug", "project_image_count" .  Dumper(\@row) . " " . $row[0]);
   return $row[0];
 }
 
