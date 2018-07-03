@@ -1,5 +1,5 @@
 #
-#   mod_perl handler, guideposts, part of openstreetmap.cz
+#   Guideposts, mod_perl2 handler
 #   Copyright (C) 2015 - 2018 Michal Grezl
 #                 2016 Marián Kyral
 #                 2016 Miroslav Suchý
@@ -459,15 +459,23 @@ sub sequence()
 {
   my $seq = shift;
 
-  my $out = &page_header();
+  my $out = &page_header([],[],"guidepost sequence");
+
+  $out .= "<style>\n";
+  $out .= "li.g { background: green; }\n";
+  $out .= "li,r { background: red; }\n";
+  $out .= "</style>\n";
 
   $out .= "<ul>";
   for (my $i = 0; $i < 1000; $i++) {
-    $out .= "<li> $i: $seq$i ";
     my $zeropadi = sprintf("%03d", $i);
-    $out .= "<a href='$https://" . $hostname . "/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
+
     if (&tag_query("ref",$seq.$i)) {
-    $out .= " - DB ";
+    $out .= "<li class='g'> $i: ";
+      $out .= "<a href=" . &https() . "://" . $hostname . "/table/ref/" . uc $seq . $zeropadi . "'>".$seq.$zeropadi."</a>";
+    } else  {
+    $out .= "<li  class='r'> $i: ";
+      $out .= uc $seq . $zeropadi;
     }
   }
   $out .= "</ul>";
@@ -1048,6 +1056,19 @@ sub output_html_pager()
 }
 
 ################################################################################
+sub https
+################################################################################
+{
+  my $https;
+  if ($is_https) {
+    $https = "https";
+  } else {
+    $https = "http";
+  }
+  return $https;
+}
+
+################################################################################
 sub output_html
 ################################################################################
 {
@@ -1066,11 +1087,13 @@ sub output_html
     "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css"
   );
 
-  if ($is_https) {
-    $https = "https";
-  } else {
-    $https = "http";
-  }
+#  if ($is_https) {
+#    $https = "https";
+#  } else {
+#    $https = "http";
+#  }
+
+  $https = &https();
 
   my $out = &page_header(\@s,\@l);
 
@@ -1763,7 +1786,7 @@ sub get_gp_count
 sub page_header()
 ################################################################################
 {
-  my ($scripts, $links) = @_;
+  my ($scripts, $links, $title) = @_;
   my $out = '
 <!doctype html>
 <html lang="en">
@@ -1772,8 +1795,13 @@ sub page_header()
   <meta http-equiv="cache-control" content="no-cache">
   <meta http-equiv="pragma" content="no-cache">
   <link rel="stylesheet" type="text/css" href="//api.openstreetmap.cz/webapps/editor/editor.css">
-  <title>openstreetmap.cz guidepost editor</title>
 ';
+
+  if ($title) {
+    $out .= "<title>$title</title>";
+  } else {
+    $out .= "<title>openstreetmap.cz guidepost editor</title>";
+  }
 
   foreach $i (@$links) {
     $out .= "  <link rel='stylesheet' type='text/css' href='";

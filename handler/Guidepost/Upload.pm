@@ -1,5 +1,5 @@
 #
-#   mod_perl handler, upload, part of openstreetmap.cz
+#   GUideposts, upload, mod_perl2 handler
 #   Copyright (C) 2016, 2017 Michal Grezl
 #
 #   This program is free software; you can redistribute it and/or modify
