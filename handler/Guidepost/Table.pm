@@ -499,7 +499,7 @@ sub output_all()
     $query = &add_uri_params_to_query($query, 1);
   }
 
-  &output_data($query);
+  $error_result = &output_data($query);
 }
 
 ################################################################################
@@ -857,7 +857,8 @@ sub output_data
   my ($query) = @_;
   my $ret;
 
-  wsyslog("info", "output_data in $OUTPUT_FORMAT query:" . $query);
+  wsyslog("info", "output_data in $OUTPUT_FORMAT");
+  wsyslog("debug", "output_data query:" . $query);
 
   if ($OUTPUT_FORMAT eq "html") {
     $ret = output_html($query);
