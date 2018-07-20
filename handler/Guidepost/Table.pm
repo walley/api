@@ -54,6 +54,7 @@ use Sys::Syslog;
 use HTML::Entities;
 
 use File::Copy;
+use File::Basename;
 use Encode;
 
 use Net::Subnet;
@@ -188,7 +189,7 @@ sub handler
 
   foreach $text (@uri_components) {
     $text = &smartdecode($text);
-    $text =~ s/[^A-Za-z0-9ěščřžýáíéůúĚŠČŘŽÝÁÍÉŮÚ.:, \/]//g;
+    $text =~ s/[^A-Za-z0-9ěščřžýáíéůúňĚŠČŘŽÝÁÍÉŮÚŇ.:, \/\p{IsLatin}]//g;
   }
 
   $error_result = Apache2::Const::OK;
@@ -2207,8 +2208,8 @@ sub approve_edit
 
   if (&check_privileged_access()) {
     wsyslog('info', "approving because of privileged_access");
-  } elsif (&authorized()) {
-    wsyslog('info', "approving because authorized");
+#  } elsif (&authorized()) {
+#    wsyslog('info', "approving because authorized");
   } else {
     $error_result = 401;
     return;
@@ -2270,12 +2271,14 @@ sub delete_id
   $res = $dbh->selectall_hashref($query, 'id');
 
   my $original_file =  $image_root . $res->{$id}->{url};
-  my $new_file = $image_root . "/deleted/" . $res->{$id}->{url};
+  my $new_file = $image_root . "/deleted/" . basename($res->{$id}->{url});
 
 #move picture to backup directory
-  wsyslog('info', "Moving $original_file to $new_file");
+  wsyslog('info', "delete_id: Moving $original_file to $new_file");
   if (!move($original_file, $new_file)) {
-    wsyslog('info', "Move failed($original_file,$new_file): $!");
+    wsyslog('info', "delete_id: Move failed($original_file,$new_file): $!");
+    $error_result = 500;
+    return;
   }
 
 #delete from db
