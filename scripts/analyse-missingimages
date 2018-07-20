@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+#analyze missing image files
+
+print "start\n";
+
+$cmd = "echo 'select id,url from guidepost;' \| /usr/bin/sqlite3 guidepost";
+$o = `$cmd`;
+my @lines = split /\n/ => $o;
+
+foreach $i (@lines) {
+  @dt = split(/\|/, $i);
+  print "not found $dt[0] :  $dt[1] \n" unless -e $dt[1];
+}

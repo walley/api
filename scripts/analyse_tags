@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+use LWP::UserAgent;
+
+#analyze tags
+
+my $ua = LWP::UserAgent->new;
+ 
+my $server_endpoint = "http://api.openstreetmap.cz/table/tags";
+
+print "start\n";
+
+for ($i = 0; $i < 12000; $i++) {
+  $cmd = "echo 'select id,ref from guidepost where id=$i;' \| /usr/bin/sqlite3 guidepost";
+  $o = `$cmd`;
+  chomp $o;
+
+  if ($o ne "") {
+    @dt = split(/\|/, $o);
+
+    print "id=" . $dt[0] . " ";
+
+    @t = split(";", $dt[1]);
+
+    print "tags ";
+    foreach $x (@t) {
+      print "ref:$x,";
+      if ($x ne "none" and $x ne "") {
+        postpost($dt[0], lc "ref:$x");
+      }
+    }
+    print "\n";
+  }
+}
+
+ 
+sub postpost()
+{
+  my ($id,$tag) = @_;
+
+  my $req = HTTP::Request->new(POST => $server_endpoint);
+  my $post_data = "id=$id&tag=$tag";
+  $req->content($post_data);
+  my $resp = $ua->request($req);
+  if ($resp->is_success) {
+      my $message = $resp->decoded_content;
+      print " sent ";
+  } else {
+      print " ".$resp->code, " ";
+  }
+}
