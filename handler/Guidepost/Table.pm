@@ -33,6 +33,7 @@ use Apache2::RequestIO ();
 use Apache2::RequestRec ();
 use Apache2::ServerRec;
 use Apache2::URI ();
+use Apache2::Cookie;
 
 use APR::Brigade ();
 use APR::Bucket ();
@@ -58,6 +59,9 @@ use File::Basename;
 use Encode;
 
 use Net::Subnet;
+use Net::OAuth;
+use Net::OAuth::AccessTokenRequest;
+
 use Image::ExifTool;
 use LWP::Simple;
 
@@ -92,6 +96,7 @@ my $api_param;
 
 my $request_id;
 
+my $cookie_jar;
 ################################################################################
 sub handler
 ################################################################################
@@ -110,6 +115,11 @@ sub handler
 
   $r = shift;
 
+  openlog('guidepostapi', 'cons,pid', 'user');
+
+  my $cookie_jar = Apache2::Cookie::Jar->new($r);
+  my $sessid_cookie = $cookie_jar->cookies("oauth2sessid");
+
   my $s = $r->server;
   $s->timeout(20_000_000);
 
@@ -119,6 +129,8 @@ sub handler
 #                               POST_MAX => 10 * 1024 * 1024, # in bytes, so 10M
 #                               DISABLE_UPLOADS => 0);
 
+ 
+
   $dbpath = $r->dir_config("dbpath");
 
   if ($r->connection->can('remote_ip')) {
@@ -127,11 +139,22 @@ sub handler
     $remote_ip = $r->useragent_ip;
   }
 
+  &connect_db();
+
   $user = $ENV{REMOTE_USER};
+
+  if ($sessid_cookie ne "") {
+    wsyslog('info', 'cookie:' . $sessid_cookie);
+    @s = split('=', $sessid_cookie);
+    my $u = &get_session_username($s[1]);
+    if ($u ne "") {
+      $user = $u;
+    }
+  }
+
   $is_https = $ENV{HTTPS};
   $referrer = $ENV{HTTP_REFERER};
 
-  openlog('guidepostapi', 'cons,pid', 'user');
 
   wsyslog('info', 'referrer:' . $referrer);
 
@@ -183,7 +206,6 @@ sub handler
 
   $r->no_cache(1);
 
-  &connect_db();
 
   @uri_components = split("/", $uri);
 
@@ -275,7 +297,12 @@ sub handler
   } elsif ($api_request eq "robot") {
     &robot();
   } elsif ($api_request eq "login") {
-    &login();
+#    &login();
+  } elsif ($api_request eq "login_github") {
+    &login_github();
+  } elsif ($api_request eq "ok_github") {
+    &debug_postdata();
+    &login_ok($get_data{code});
   } elsif ($api_request eq "username") {
     &get_user_name();
   } elsif ($api_request eq "ping") {
@@ -447,7 +474,7 @@ sub error_500()
 <title>500 Boo Boo</title>
 </head><body>
 <h1>YAY!</h1>
-<p>We don\'t know nothing about this ;p</p>
+<p>Error, sorry ;p</p>
 <hr>
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at ' . $hostname . ' Port 80</address>
 </body></html>
@@ -556,7 +583,6 @@ sub authorized()
 
   my @ok_users = (
     "https://walley.mojeid.cz/#p8sRbfdmZu",
-    "https://mkyral.mojeid.cz/#0gQJXul3eXh1",
   );
 
 #  my $is_ok = ($user ~~ @ok_users);
@@ -635,6 +661,23 @@ sub smartdecode
 
   return $x if utf8::decode($x);
   return $y;
+}
+
+################################################################################
+sub parse_query_str
+################################################################################
+{
+  my $str = shift;
+  my %h = ();
+  if (length ($str) > 0) {
+    my @pairs = split(/&/, $str);
+    foreach my $pair (@pairs) {
+      my ($name, $value) = split(/=/, $pair);
+      $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+      $h{$name} = $value;
+    }
+  }
+  return %h;
 }
 
 ################################################################################
@@ -2062,8 +2105,8 @@ function approve(id,divid)
   .done(function() {
   \$('#reviewdiv'+divid).css('background-color', 'lightgreen');
   })
-  .fail(function() {
-    alert( 'error '+status+'.');
+  .fail(function(jqXHR) {
+    alert( 'server returned error ' + jqXHR.status + '.');
   })
   .always(function() {
   });
@@ -2077,8 +2120,8 @@ function reject(id,divid)
   .done(function() {
   \$('#reviewdiv'+divid).css('background-color', 'red');
   })
-  .fail(function() {
-    alert( 'error' );
+  .fail(function(jqXHR) {
+    alert( 'server returned error ' + jqXHR.status + '.' );
   })
   .always(function() {
   });
@@ -2171,8 +2214,12 @@ sub reject_edit
 
   wsyslog('info', "removing change id: " . $id);
 
-  $dbh->do($query) or return $dbh->errstr;
-  return "OK $id removed";
+  $dbh->do($query) or do {
+    wsyslog("info", "reject_edit(): dberror:" . $DBI::errstr . ":" . $dbh->errstr . " q: $query");
+    return 500;
+  };
+
+  return;
 }
 
 ################################################################################
@@ -2618,18 +2665,92 @@ sub robot()
 }
 
 ################################################################################
-sub login()
+sub login_github()
 ################################################################################
 {
-#FIXME https://github.com/osmcz/api/issues/44
-  my $uri_redirect = "https://api.openstreetmap.cz/webapps/editor/editor.html?login=openid&amp;xpage=0";
+  my $client_id = "5e62947a4cf5f834594e";
+  my $uri_redirect = "https://github.com/login/oauth/authorize?client_id=$client_id";
+
   $r->print("<html>");
   $r->print("<head>");
   $r->print("<meta http-equiv='REFRESH' content='1;url=$uri_redirect'>");
   $r->print("</head>");
   $r->print("<body>");
-  $r->print("<p>this will log you in and send you back to editor, ");
+  $r->print("<p>this will log you in and send you back to landing page, ");
   $r->print("or do it <a href='$uri_redirect'>yourself</a></p>");
+  $r->print("</body>");
+  $r->print("</html>");
+}
+
+################################################################################
+sub login_github_ok()
+################################################################################
+{
+
+  my $code = shift;
+
+  my $url = 'https://github.com/login/oauth/access_token';
+  my $ua = LWP::UserAgent->new(); 
+
+  my %form;
+  $form{'client_id'} = '5e62947a4cf5f834594e';
+  $form{'client_secret'} = '1a7d082708cb6cdfcbbc4f2cd9121310df3d300f';
+  $form{'code'} = $code;
+  #$form{'redirect_uri'}='';
+  #$form{'state'}='';
+
+  my $response = $ua->post($url, \%form);
+  my $content = $response->decoded_content();
+
+  my %oauth2_data = &parse_query_str($content);
+  my $acc = %oauth2_data{access_token};
+  $r->headers_out->set("X-AuthW" => $acc);
+
+
+  #my $uri_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  my $uri_redirect = "http://grezl.eu/login.html";
+
+  $url = "https://api.github.com/user?access_token=$acc";
+  my $response = $ua->get($url);
+  my $content = $response->decoded_content();
+
+  my $parsed = decode_json($content);
+  my $oauth_user = $parsed->{login};
+  my $sessid = $request_id."-".time();
+
+  $c_out = Apache2::Cookie->new($r,
+             -name  => "oauth2sessid",
+             -value => $sessid,
+             -expires => '+10d',
+  );
+  $c_out->path("/");
+  $c_out->bake($r);
+
+  $query = "insert into session (acc, sessid, username) values ('$acc', '$sessid', '$oauth_user')";
+  my $sth = $dbh->prepare($query);
+  my $res = $sth->execute() or do {
+    wsyslog("info", "500: oauth2 ok  " . $DBI::errstr . " $query");
+    $error_result = 500;
+    return;
+  };
+
+  #$login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  $login_redirect = "http://grezl.eu/login.html";
+
+  $r->print("<html>");
+  $r->print("<head>");
+  $r->print("<meta http-equiv='REFRESH' content='10;url=$login_redirect'>");
+  $r->print("</head>");
+  $r->print("<body>");
+  $r->print("<p>login ok? ....</p> <pre>$content </pre>");
+
+  $r->print("<h1>~=." . $parsed->{login} . " .=~</h1>");
+
+  $r->print("<pre>" . Dumper(\%oauth2_data) . "</pre>");
+  $r->print("<pre>" . Dumper(\$parsed) . "</pre>");
+  $r->print("<pre>" .$response->as_string() . "</pre>");
+
+
   $r->print("</body>");
   $r->print("</html>");
 }
@@ -3051,6 +3172,19 @@ sub list_assigned
     $r->print($out);
   }
 
+}
+
+################################################################################
+sub get_session_username
+################################################################################
+{
+  my $sessid = shift;
+
+  my $query = "select username from session where sessid=?";
+  my $sth = $dbh->prepare($query);
+  my $rv = $sth->execute($sessid) or return "";
+  my @row = $sth->fetchrow_array();
+  return $row[0];
 }
 
 1;
