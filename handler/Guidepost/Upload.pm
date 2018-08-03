@@ -75,7 +75,10 @@ my $maxlon;
 my $maxlat;
 my $error_result;
 my $remote_ip;
+
 my $dbpath;
+my $githubclientid;
+my $githubclientsecret;
 
 ################################################################################
 sub handler
@@ -92,6 +95,8 @@ sub handler
   $r->no_cache(1);
 
   $dbpath = $r->dir_config("dbpath");
+  $githubclientid = $r->dir_config("githubclientid");
+  $githubclientsecret = $r->dir_config("githubclientsecret");
 
   openlog('upload', 'pid', 'user');
 

@@ -88,15 +88,15 @@ my $maxlat;
 my $error_result;
 my $remote_ip;
 my $dbpath;
+my $githubclientid;
+my $githubclientsecret;
 my $user;
 my $hostname;
-
 my $api_request;
 my $api_param;
-
 my $request_id;
-
 my $cookie_jar;
+
 ################################################################################
 sub handler
 ################################################################################
@@ -129,9 +129,11 @@ sub handler
 #                               POST_MAX => 10 * 1024 * 1024, # in bytes, so 10M
 #                               DISABLE_UPLOADS => 0);
 
- 
+
 
   $dbpath = $r->dir_config("dbpath");
+  $githubclientid = $r->dir_config("githubclientid");
+  $githubclientsecret = $r->dir_config("githubclientsecret");
 
   if ($r->connection->can('remote_ip')) {
     $remote_ip = $r->connection->remote_ip
@@ -298,11 +300,11 @@ sub handler
     &robot();
   } elsif ($api_request eq "login") {
 #    &login();
-  } elsif ($api_request eq "login_github") {
+  } elsif ($api_request eq "logingithub") {
     &login_github();
-  } elsif ($api_request eq "ok_github") {
+  } elsif ($api_request eq "okgithub") {
     &debug_postdata();
-    &login_ok($get_data{code});
+    &login_ok_github($get_data{code});
   } elsif ($api_request eq "username") {
     &get_user_name();
   } elsif ($api_request eq "ping") {
@@ -2668,7 +2670,7 @@ sub robot()
 sub login_github()
 ################################################################################
 {
-  my $client_id = "5e62947a4cf5f834594e";
+  my $client_id = $githubclientid;
   my $uri_redirect = "https://github.com/login/oauth/authorize?client_id=$client_id";
 
   $r->print("<html>");
@@ -2683,7 +2685,7 @@ sub login_github()
 }
 
 ################################################################################
-sub login_github_ok()
+sub login_ok_github()
 ################################################################################
 {
 
@@ -2693,8 +2695,8 @@ sub login_github_ok()
   my $ua = LWP::UserAgent->new(); 
 
   my %form;
-  $form{'client_id'} = '5e62947a4cf5f834594e';
-  $form{'client_secret'} = '1a7d082708cb6cdfcbbc4f2cd9121310df3d300f';
+  $form{'client_id'} = $githubclientid;
+  $form{'client_secret'} = $githubclientsecret;
   $form{'code'} = $code;
   #$form{'redirect_uri'}='';
   #$form{'state'}='';
@@ -2704,11 +2706,16 @@ sub login_github_ok()
 
   my %oauth2_data = &parse_query_str($content);
   my $acc = %oauth2_data{access_token};
+
+  if ($acc eq "") {
+    $error_result = 400;
+    wsyslog("info", "400: oauth2 no acc ($acc)");
+    return;
+  }
+
   $r->headers_out->set("X-AuthW" => $acc);
 
-
-  #my $uri_redirect = "http://api.openstreetmap.cz/webapps/login.html";
-  my $uri_redirect = "http://grezl.eu/login.html";
+  my $uri_redirect = "http://api.openstreetmap.cz/webapps/login.html";
 
   $url = "https://api.github.com/user?access_token=$acc";
   my $response = $ua->get($url);
@@ -3180,8 +3187,14 @@ sub get_session_username
 {
   my $sessid = shift;
 
+  wsyslog("info", "get_session_username $sessid");
+
+  if ($sessid eq "") {
+    return "";
+  }
+
   my $query = "select username from session where sessid=?";
-  my $sth = $dbh->prepare($query);
+  my $sth = $dbh->prepare($query) or return "";
   my $rv = $sth->execute($sessid) or return "";
   my @row = $sth->fetchrow_array();
   return $row[0];
