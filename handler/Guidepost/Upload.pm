@@ -39,6 +39,8 @@ use APR::URI ();
 use constant IOBUFSIZE => 8192;
 use APR::Request;
 
+use File::Basename;
+
 use DBI;
 
 use Data::Dumper;
@@ -63,7 +65,7 @@ use LWP::Simple;
 use Geo::Inverse;
 use Geo::Distance;
 
-use jQuery::File::Upload;
+#use jQuery::File::Upload;
 use Inline::Files;
 
 my $dbh;
@@ -95,8 +97,6 @@ sub handler
   $r->no_cache(1);
 
   $dbpath = $r->dir_config("dbpath");
-  $githubclientid = $r->dir_config("githubclientid");
-  $githubclientsecret = $r->dir_config("githubclientsecret");
 
   openlog('upload', 'pid', 'user');
 
@@ -132,7 +132,7 @@ sub form
 {
   $r->print(<<EOF);
   <html><body>
-  <form enctype="multipart/form-data" name="files" action="/test/y" method="POST">
+  <form enctype="multipart/form-data" name="files" action="phase1" method="POST">
     File 1 <input type="file" name="file1"><br>
     File 2 <input type="file" name="file2"><br><br>
     <input type="submit" name="submit" value="Upload these files">
@@ -153,6 +153,8 @@ sub phase1
   my @a = (status => "success");
   my %file;
 
+  syslog("info", "PHASE1");
+
   foreach $file (@uploads) {
     $error = "";
     $upload = $r->upload($file);
@@ -162,6 +164,20 @@ sub phase1
 
     $file{name} = $upload->filename();
     $file{size} = $upload->size();
+
+    syslog("info", "doing file:".$file{name});
+    syslog("info", "doing size:".$file{size});
+
+    my ($basename, $parentdir, $extension) = fileparse($file{name}, qr/\.[^.]*$/);
+
+    syslog("info", "($basename, $parentdir, $extension)");
+
+    if ($extension ne "jpg" and $extension ne "JPG") {
+      syslog("info", "wrong filename:".$upload->filename());
+      $error = "not jpeg";
+      next;
+    }
+
 
     $final = "/var/www/api/uploads/" . $upload->filename();
 
@@ -236,7 +252,7 @@ sub exif
     $gps_lat = (($ea[1] eq "N")?"":"-") . $ea[0];
     syslog("info", "yes ". $ea[0] ." ". $ea[1] ." ". $gps_lat);
   } else {
-    syslog("info", "no");
+    syslog("info", "no gps");
     $gps_lat = "nope";
   }
 

@@ -305,6 +305,9 @@ sub handler
   } elsif ($api_request eq "okgithub") {
     &debug_postdata();
     &login_ok_github($get_data{code});
+  } elsif ($api_request eq "loginnextcloud") {
+  } elsif ($api_request eq "okgnextcloud") {
+    &debug_postdata();
   } elsif ($api_request eq "username") {
     &get_user_name();
   } elsif ($api_request eq "ping") {
@@ -2723,7 +2726,13 @@ sub login_ok_github()
 
   my $parsed = decode_json($content);
   my $oauth_user = $parsed->{login};
+  $oauth_user .= '@github';
+
+  #fixme check github response
+
   my $sessid = $request_id."-".time();
+
+  wsyslog("info", "login_ok_github:$oauth_user");
 
   $c_out = Apache2::Cookie->new($r,
              -name  => "oauth2sessid",
@@ -2741,8 +2750,8 @@ sub login_ok_github()
     return;
   };
 
-  #$login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
-  $login_redirect = "http://grezl.eu/login.html";
+  $login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  #$login_redirect = "http://grezl.eu/login.html";
 
   $r->print("<html>");
   $r->print("<head>");
