@@ -227,7 +227,7 @@ sub handler
   }
 
   wsyslog('info', "request to $hostname from $remote_ip by $user");
-  wsyslog('info', "ver. $api_version: $api_request, method " . $r->method());
+  wsyslog('info', "v: $api_version, r: $api_request, m: " . $r->method());
   wsyslog('info', "output " . $OUTPUT_FORMAT . ", limit " . $LIMIT. ", offset " . $OFFSET);
   if ($PROJECT ne "") {
     wsyslog('info', "project " . $PROJECT . "id is " . $PROJECTID);
@@ -300,6 +300,8 @@ sub handler
     &robot();
   } elsif ($api_request eq "login") {
 #    &login();
+  } elsif ($api_request eq "logout") {
+    &logout();
   } elsif ($api_request eq "logingithub") {
     &login_github();
   } elsif ($api_request eq "okgithub") {
@@ -2246,7 +2248,7 @@ sub db_do2
   my ($query, $param) = @_;
 
   $res = $dbh->do($query, undef, $param) or do {
-    wsyslog("info", "500: db_do(): dberror:" . $DBI::errstr . " q: $query");
+    wsyslog("info", "500: db_do2(): dberror:" . $DBI::errstr . " q: $query p: $param");
     $error_result = 500;
   };
 }
@@ -2604,7 +2606,6 @@ sub exif()
     $exifdata{$group}{$exifTool->GetDescription($tag)} = $val;
   }
 
-#fixme try this $OUTPUT_FORMAT ~~ ["geojson" "kml" "gpx"]
   if ($OUTPUT_FORMAT eq "geojson" or $OUTPUT_FORMAT eq "kml") {
     #Bad Request
     $error_result = 400;
@@ -2664,9 +2665,17 @@ sub robot()
          wsyslog('info', "robot NOT adding new value: old is ($old_value) new is ($id, $gp_id, $col, $value, $action)");
        }
     } else {
-#      syslog('info', "no robot");
     }
   }
+}
+
+################################################################################
+sub logout()
+################################################################################
+{
+  wsyslog('info', "logout: $user ...");
+  my $query = "delete from session where username=?";
+  db_do2($query, $user);
 }
 
 ################################################################################
@@ -2979,7 +2988,7 @@ sub list_projects
   my $out = "";
   my $id = shift;
 
-  my $query = "select name from project";
+  my $query = "select name,maintainer from project";
 
   my $res = $dbh->selectall_arrayref($query) or do {
     wsyslog("info", "500: list_projects(): dberror:" . $DBI::errstr . " q: $query");
@@ -2987,17 +2996,21 @@ sub list_projects
     return;
   };
 
+  my @outproject = (@$res);
+
   if ($OUTPUT_FORMAT eq "json"){
     $out .= encode_json($res);
+#    $out .= encode_json(\@outproject);
   } elsif ($OUTPUT_FORMAT eq "html"){
     $out .= &page_header();
     $out .= "<ol>\n";
     foreach my $i (@$res) {
       $out .= "<li>\n";
       my $prj_name = @$i[0]."\n";
+      my $prj_owner = @$i[1]."\n";
       my $url = &get_protocol() . "://" . $hostname . "/" . $api_version . "/" . "all" . "?project=" . $prj_name;
       $out .= "<a href='$url'>\n";
-      $out .= $prj_name."\n";
+      $out .= $prj_name." ($prj_owner)\n";
       $out .= "</a>\n";
     };
     $out .= "</ol>\n";

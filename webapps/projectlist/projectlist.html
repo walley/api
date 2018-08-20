@@ -12,7 +12,7 @@ function xxpost()
   term = $("#addinput").val();
   alert(term);
 
-  var jqxhr = $.post( "http://api.openstreetmap.cz/table/projectlist", { add: term, time: "2pm" })
+  var jqxhr = $.post( "https://api.openstreetmap.cz/table/projectlist", { add: term, time: "2pm" })
   .done(function() {
     alert( "second success" );
   })
@@ -30,7 +30,7 @@ function xxdelete()
   alert(term);
 
 $.ajax({
-    url: 'http://api.openstreetmap.cz/table/projectlist',
+    url: 'https://api.openstreetmap.cz/table/projectlist',
     method: 'DELETE',
     data: { project: term},
     success: function(result) {
@@ -50,9 +50,9 @@ $.ajax({
 
 <h1>Manage projects</h1>
 
-<h2> list of projects</h2>
+<h2>List of projects (maintainer)</h2>
 <script>
-$.get( "http://api.openstreetmap.cz/table/projectlist", function( data ) {
+$.get( "https://api.openstreetmap.cz/table/projectlist", function( data ) {
  // alert( "Data Loaded: " + data );
     $( "#resultget" ).empty().append(data);
 });
@@ -73,11 +73,6 @@ $.get( "http://api.openstreetmap.cz/table/projectlist", function( data ) {
 <input id="delinput" type="text" name="add" placeholder="delete project">
 <input type="button" value="delete" onclick="xxdelete()">
 
- 
 </body>
 </html>
 
-
-
-<script>
-</script>
