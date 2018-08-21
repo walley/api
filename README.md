@@ -1,10 +1,10 @@
-# api
-api, backend, scripts
-
+# what is this?
+Guidepost api, and things needed to run it.
+Guidepost is spatial aware image database. You can show images on maps and more.
 You need to have mod_perl2 from http://perl.apache.org/ installed.
+API specs and help: http://api.openstreetmap.cz/editor-help.html.
 
 # apache configuration
-
 
 ```
   <DirectoryMatch "^/.*/\.git/">
@@ -83,14 +83,9 @@ desc varchar
 );
 ```
 
-# dirs:
+# dirs
 * commons-scripts - bunch of scripts used to create commons db
-
 * handler - mod_perl handlers
+* webapps - web applications that use the api
 
-* vagrant - portable virtual software development environment, debian and others
-
-
-# guidepost api:
-http://api.openstreetmap.cz/editor-help.html
 
