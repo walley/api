@@ -3179,7 +3179,6 @@ sub list_assigned
 
   wsyslog("info", "list_assigned prj_id:" . $prj_id);
 
-
   my $res = $dbh->selectall_arrayref($query, undef, $prj_id) or do {
     wsyslog("info", "list_assigned db error" . $DBI::errstr);
     $out = "list_assigned: DB error";
@@ -3195,7 +3194,10 @@ sub list_assigned
   if ($OUTPUT_FORMAT eq "html") {
     $r->print($out);
   } elsif ($OUTPUT_FORMAT eq "json") {
-    $out = encode_json($res);
+my %x;
+$x{imgs} = $res;
+$x{manager} = "kokot";
+    $out = encode_json(\%x);
     $r->print($out);
   } else {
     $r->print($out);

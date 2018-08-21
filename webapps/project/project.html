@@ -3,123 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Cache-control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Project manager</title>
 
-<style type="text/css">
- .topcorner{
-   position:absolute;
-   top:0;
-   right:0;
-  }
-</style>
-
-
+  <link rel="stylesheet" href="project.css">
   <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-
-<script>
-var username = "anon";
-
-function xxassign()
-{
-
-  var name = get_name();
-
-  term = $("#assign").val();
-
-  var jqxhr = $.post("https://api.openstreetmap.cz/table/project/ " + name, 
-                     { gp_id: term, project: name })
-  .done(function() {
-    alert( "done" );
-  })
-  .fail(function() {
-    alert( "error" );
-  })
-  .always(function() {
-    alert( "finished" );
-  });
-}
-
-function xxdelete()
-{
-  var name = get_name();
-  var gp_id = $("#delinput").val();
-  alert(gp_id);
-
-  $.ajax({
-    url: 'https://api.openstreetmap.cz/table/project',
-    method: 'DELETE',
-    data: { gp_id: gp_id, project: name },
-    success: function(result) {
-      alert("done");
-    },
-    error: function(request,msg,error) {
-      alert("error");
-    }
-  });
-}
-
-function get_name()
-{
-  return $("#options").val();
-}
-
-
-function set_username()
-{
-  get_username();
-  $("#username").html(username);
-}
-
-function get_username()
-{
-
-  var jqxhr = $.get("https://api.openstreetmap.cz/table/username/")
-  .done(function(data) {
-    username = data;
-    set_username();
-  })
-  .fail(function() {
-    alert("username error");
-  })
-  .always(function() {
-  });
-}
-
-function refresh_list()
-{
-
-  name = get_name();
-  $( "#resultget" ).empty();
-
-//  $.get( "https://api.openstreetmap.cz/table/project/"+name, function( data ) {
-//    $( "#resultget" ).append(data);
-//  });
-
-  $.getJSON("https://api.openstreetmap.cz/table/project/"+name,
-    {
-      output: "json",
-    },
-    function(result) {
-      var options = $("#options");
-      $.each(result, function(index, value) {
-        data = index + ": <a href='https://api.openstreetmap.cz/" + value[1] + "'>"+value[0]+"</a>";
-        $("#resultget").append(data);
-        $("#resultget").append(" [remove]");
-        $("#resultget").append("\n<br>");
-      });
-    }
-  );
-}
-
-</script>
+  <script src="project.js"></script>
 
 </head>
 <body>
 
 <div class="topcorner">
-login info<br>
 <span id='username'>username:)</span><br>
-login info<br>
+login ...<br>
+logout ...<br>
+<hr>
+<a href='/editor-help.html'>about ...</a><br>
 </div>
 
 <h1>Manage project</h1>
@@ -134,18 +34,19 @@ login info<br>
   $.getJSON("https://api.openstreetmap.cz/table/projectlist?output=json", function(result) {
     var options = $("#options");
     $.each(result, function(index, value) {
-      alert( index + ": " + value[0] + " " + value[1] );
+      //alert( index + ": " + value[0] + " " + value[1] );
       options.append($("<option />").val(value[0]).text(value[0] + " by " + value[1]));
     });
   });
 </script>
 
+<h2>Manager</h2>
 
-<p>Project manager:<span id='manager'>projectmanager</span></p>
+<p>Only manager can edit:<span id="manager">projectmanager</span></p>
 
 <h2> Images assigned to a project</h2>
 <button onclick="refresh_list();">
-refresh
+refresh, no autorefresh yet
 </button>
 
 <div id="resultget">
