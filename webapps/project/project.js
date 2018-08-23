@@ -11,13 +11,11 @@ function xxassign()
   var jqxhr = $.post("https://api.openstreetmap.cz/table/project/ " + name,
                      { gp_id: term, project: name })
   .done(function() {
-    alert( "done" );
   })
-  .fail(function() {
-    alert( "error" );
+  .fail(function(xhr, status, error) {
+    alert("error "+ xhr.status + " " + error);
   })
   .always(function() {
-    alert( "finished" );
   });
 }
 
@@ -25,7 +23,6 @@ function xxdelete()
 {
   var name = get_name();
   var gp_id = $("#delinput").val();
-  alert(gp_id);
 
   $.ajax({
     url: 'https://api.openstreetmap.cz/table/project',
@@ -34,8 +31,8 @@ function xxdelete()
     success: function(result) {
       alert("done");
     },
-    error: function(request,msg,error) {
-      alert("error");
+    error: function(xhr,status,error) {
+      alert("error "+ xhr.status + " " + error);
     }
   });
 }

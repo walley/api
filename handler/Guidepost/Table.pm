@@ -378,6 +378,7 @@ sub handler
   if ($error_result) {
     if ($error_result == 400) {error_400();}
     if ($error_result == 401) {error_401();}
+    if ($error_result == 403) {error_403();}
     if ($error_result == 404) {error_404();}
     if ($error_result == 412) {error_412();}
     if ($error_result == 500) {error_500();}
@@ -427,7 +428,26 @@ sub error_401()
 <title>401 Unauthorized</title>
 </head><body>
 <h1>You can not do this</h1>
-<p>to me:(</p>
+<p>we do not know you</p>
+<hr>
+<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+</body></html>
+');
+}
+
+
+################################################################################
+sub error_403()
+################################################################################
+{
+  $r->content_type('text/html; charset=utf-8');
+
+  $r->print('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>You can not do this</h1>
+<p>you are not allowed to</p>
 <hr>
 <address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
@@ -3129,6 +3149,21 @@ sub assign_to_project
     return;
   }
 
+#fixme make some function out of this
+  $maintainer = &get_project_maintainer($project);
+
+  if ($maintainer ne $user) {
+    wsyslog("info", "action denied, user is not maintainer");
+    $error_result = 403;
+    return;
+  }
+
+  if ($user eq "anon.openstreetmap.cz") {
+    wsyslog("info", "action denied, must be logged in");
+    $error_result = 401;
+    return;
+  }
+
   wsyslog("info", "assign $gp_id to $project id $prj_id ");
 
   if (!&is_assigned($gp_id, $prj_id)) {
@@ -3150,11 +3185,25 @@ sub remove_from_project
   my ($gp_id, $project) = @_;
   my $prj_id = &resolve_project($project);
 
-  wsyslog("info", "trying to reomve $gp_id from $project ($prj_id)");
+  wsyslog("info", "$user is trying to reomve $gp_id from $project ($prj_id)");
 
   if (!defined $prj_id) {
     wsyslog("info", "undefined ");
     $error_result = 412;
+    return;
+  }
+
+  $maintainer = &get_project_maintainer($project);
+
+  if ($maintainer ne $user) {
+    wsyslog("info", "action denied, user is not maintainer");
+    $error_result = 403;
+    return;
+  }
+
+  if ($user eq "anon.openstreetmap.cz") {
+    wsyslog("info", "action denied, must be logged in");
+    $error_result = 401;
     return;
   }
 
@@ -3186,17 +3235,18 @@ sub list_assigned
     return 500;
   };
 
-  foreach my $row (@$res) {
-    my ($id, $url) = @$row;
-    $out .=  "$id $url\n";
-  }
+#get project maintainer
 
   if ($OUTPUT_FORMAT eq "html") {
+    foreach my $row (@$res) {
+      my ($id, $url) = @$row;
+      $out .=  "$id $url\n";
+    }
     $r->print($out);
   } elsif ($OUTPUT_FORMAT eq "json") {
-my %x;
-$x{imgs} = $res;
-$x{manager} = "kokot";
+    my %x;
+    $x{imgs} = $res;
+    $x{manager} = &get_project_maintainer($project);
     $out = encode_json(\%x);
     $r->print($out);
   } else {
@@ -3220,6 +3270,29 @@ sub get_session_username
   my $query = "select username from session where sessid=?";
   my $sth = $dbh->prepare($query) or return "";
   my $rv = $sth->execute($sessid) or return "";
+  my @row = $sth->fetchrow_array();
+  return $row[0];
+}
+
+################################################################################
+sub get_project_maintainer
+################################################################################
+{
+  my $name = shift;
+  my $query = "select maintainer from project where name=?";
+
+  wsyslog("debug", "get__project_maintainer $query $name");
+
+  my $sth = $dbh->prepare($query) or do {
+    wsyslog("info", "get_project_maintainer dberror " . $DBI::errstr . " q: $query");
+    return "";
+  };;
+
+  $sth->execute($name) or do {
+    wsyslog("info", "get_project_maintainer dberror " . $DBI::errstr . " q: $query");
+    return "";
+  };
+
   my @row = $sth->fetchrow_array();
   return $row[0];
 }
