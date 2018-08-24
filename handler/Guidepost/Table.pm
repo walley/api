@@ -135,6 +135,10 @@ sub handler
   $githubclientid = $r->dir_config("githubclientid");
   $githubclientsecret = $r->dir_config("githubclientsecret");
 
+  $nextcloudclientid = $r->dir_config("nextcloudclientid");
+  $nextcloudclientsecret = $r->dir_config("nextcloudclientsecret");
+  $nextcloudserver = $r->dir_config("nextcloudserver");
+
   if ($r->connection->can('remote_ip')) {
     $remote_ip = $r->connection->remote_ip
   } else {
@@ -308,7 +312,7 @@ sub handler
     &debug_postdata();
     &login_ok_github($get_data{code});
   } elsif ($api_request eq "loginnextcloud") {
-  } elsif ($api_request eq "okgnextcloud") {
+  } elsif ($api_request eq "oknextcloud") {
     &debug_postdata();
   } elsif ($api_request eq "username") {
     &get_user_name();

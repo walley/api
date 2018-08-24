@@ -8,19 +8,35 @@
   <title>Project manager</title>
 
   <link rel="stylesheet" href="project.css">
-  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="project.js"></script>
+  <script src="menu.js"></script>
 
 </head>
-<body>
+
+<body onload="init_menu()">
 
 <div class="topcorner">
-<span id='username'>username:)</span><br>
-login ...<br>
-logout ...<br>
-<hr>
-<a href='/editor-help.html'>about ...</a><br>
+
+&nbsp;
+<div id="navmenu" class="navmenu">
+<img src="bora.png" width="24px" height="24px"><img src="navmenu.png" width="20px" height="20px">
 </div>
+</div>
+
+<ul id="menu" class="topcornermenu initially_hidden">
+  <li><div><b><span id='username'>username</span></b></div>
+  <li><div>Profile</div></li>
+  <li><div></div></li>
+  <li><div><a href="https://api.openstreetmap.cz/webapps/login.html">Login ...</a></div></li>
+  <li><div><a href="https://api.openstreetmap.cz/webapps/logout.html">Logout ...</a></div></li>
+  <li><div></div>
+  <li><div><a href="https://api.openstreetmap.cz/editor-help.html">About ...</a></div></li>
+</ul>
+
 
 <h1>Manage project</h1>
 
