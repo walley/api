@@ -7,14 +7,15 @@ API specs and help: http://api.openstreetmap.cz/editor-help.html.
 # apache configuration
 
 ```
-  <DirectoryMatch "^/.*/\.git/">
-    Order deny,allow
-    Deny from all
-  </DirectoryMatch>
 
   Header set Access-Control-Allow-Origin "*"
   PerlRequire /var/www/api/handler/startup.pl
   PerlSetVar ReloadAll Off
+  PerlSetVar dbpath "/var/www/somewhere/"
+  PerlSetVar githubclientid "5e6294rt234523454e"
+  PerlSetVar githubclientsecret "1324tr5324510df3d300f"
+  PerlSetVar nextcloudclientid "ZvF90bzrKK"
+  PerlSetVar nextcloudclientsecret "S7V6ttyewf3435"
 
   <Location /table>
     SetHandler perl-script
@@ -27,6 +28,13 @@ API specs and help: http://api.openstreetmap.cz/editor-help.html.
     PerlResponseHandler Guidepost::Commons
     PerlOptions +ParseHeaders
   </Location>
+
+  <Location /upload>
+    SetHandler perl-script
+    PerlResponseHandler Guidepost::Upload
+    PerlOptions +ParseHeaders
+  </Location>
+
 ```
 
 # sqlite3 schema
