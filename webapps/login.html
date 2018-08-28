@@ -5,39 +5,200 @@
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guidepost login page</title>
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+<style>
+
+* {box-sizing: border-box}
+
+/* style the container */
+.container {
+  position: relative;
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px 0 30px 0;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  margin: 5px 0;
+  opacity: 0.85;
+  display: inline-block;
+  font-size: 17px;
+  line-height: 20px;
+  text-decoration: none; /* remove underline from anchors */
+}
+
+input:hover,
+.btn:hover {
+  opacity: 1;
+}
+
+.nxt {
+  background-color: #0082c9;
+  color: white;
+}
+
+.osm {
+  background-color: #dddddd;
+  color: white;
+}
+
+.git {
+background-color:#6cc644;
+  color: white;
+}
+
+.oid {
+background-color:#ffc5b0;
+  color: white;
+}
+
+
+.twitter {
+  background-color: #55ACEE;
+  color: white;
+}
+
+.google {
+  background-color: #dd4b39;
+  color: white;
+}
+
+/* Two-column layout */
+.col {
+  float: left;
+  width: 50%;
+  margin: auto;
+  padding: 0 50px;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* hide some text on medium and large screens */
+.hide-md-lg {
+  display: none;
+}
+
+/* bottom container */
+.bottom-container {
+  text-align: center;
+  background-color: #666;
+  border-radius: 0px 0px 4px 4px;
+}
+
+/* Responsive layout - when the screen is less than 650px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 650px) {
+  .col {
+    width: 100%;
+    margin-top: 0;
+  }
+  /* hide the vertical line */
+  .vl {
+    display: none;
+  }
+  /* show the hidden text on small screens */
+  .hide-md-lg {
+    display: block;
+    text-align: center;
+  }
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
  </head>
 
 <body>
 
+<script>
 
+function setinfo(x)
+{
+  switch(x) {
+    case 1:
+     $("#info").html("<p>only gets unique indentifier, no user info</p>");
+     break;
+    case 2:
+     $("#info").html("Not fully working");
+     break;
+    case 3:
+     $("#info").html("<p>(no scope)</p><p>Grants read-only access to public information (includes public user profile info, public repository info, and gists)</p>");
+     break;
+    case 4:
+     $("#info").html("<p>Full access. Nextcloud server selection: TBD</p>");
+     break;
+    case 5:
+     $("#info").html("Not implemented yet");
+     break;
+    case 6:
+     $("#info").html("Not implemented yet");
+     break;
+  }
+}
+
+</script>
 <h1>Guidepost login page</h1>
-<h2>Login via</h2>
 
-<h3><img src="https://cdn.openstreetmap.cz/logo/mojeid.jpg" width="100px">
-<a href='https://api.openstreetmap.cz/openid/login'>mojeiD</a></h3>
-<h4>info</h4>
-<p>only gets unique indentifier, no user info</p>
 
-<h3>OSM (Oauth1) login</h3>
-<h4>info</h4>
-<p>not working yet</p>
+ <div class="container">
+    <div class="row">
 
-<h3><img src="https://cdn.openstreetmap.cz/logo/octocat.jpg"   width="100px">
-<a href="https://api.openstreetmap.cz/table/logingithub">Github (Oauth2) login</a></h3>
-<h4>info</h4>
-<p>(no scope)</p>
-<p>Grants read-only access to public information (includes public user profile info, public repository info, and gists)</p>
+      <div class="col">
+        <a onmouseover="setinfo(1);" href="https://api.openstreetmap.cz/openid/login" class="oid btn">
+          <i class="fab fa-openid"></i> Login with MojeID
+        </a>
+        <a onmouseover="setinfo(2);" href="#" class="osm btn">
+          <i class="fas fa-map-marked"></i> Login with Openstreetmap
+        </a>
+        <a onmouseover="setinfo(3);" href="https://api.openstreetmap.cz/table/logingithub" class="git btn">
+          <i class="fab fa-github"></i> Login with Github
+        </a>
+        <a onmouseover="setinfo(4);" href="https://api.openstreetmap.cz/table/loginnextcloud" class="nxt btn">
+          <i class="fas fa-cloud"></i> Login with Nextcloud
+        </a>
+        <a onmouseover="setinfo(5);" href="#" class="twitter btn">
+          <i class="fab fa-twitter"></i> Login with Twitter
+        </a>
+        <a onmouseover="setinfo(6);" href="#" class="google btn">
+          <i class="fab fa-google-plus-g"></i> Login with Google+
+        </a>
+      </div>
 
-<h3><img src="https://cdn.openstreetmap.cz/logo/nextcloud.png" width="100px">
-Nextcloug (Oauth2) login</h3>
-<h4>info</h4>
-<p>not working yet</p>
-
+      <div class="col">
+        <div class="hide-md-lg">
+        </div>
+        <div>
+        <h2>Info</h2>
+        <div id='info'>info</div>
 <h2>Next step</h2>
 <ul>
 <li><a href='editor/editor.html'>editor</a>
 <li><a href='project/project.html'>project</a>
 <li><a href='projectlist/projectlist.html'>list of projects</a>
 </ul>
+        </div>
+      </div>
+
+    </div>
+</div>
+
+<div class="bottom-container">
+  <div class="row">
+    <div class="col">
+      <a href="#" style="color:white" class="btn">Help</a>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>

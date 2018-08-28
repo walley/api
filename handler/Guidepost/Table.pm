@@ -312,8 +312,10 @@ sub handler
     &debug_postdata();
     &login_ok_github($get_data{code});
   } elsif ($api_request eq "loginnextcloud") {
+    &login_nextcloud();
   } elsif ($api_request eq "oknextcloud") {
     &debug_postdata();
+    &login_ok_nextcloud($get_data{code});
   } elsif ($api_request eq "username") {
     &get_user_name();
   } elsif ($api_request eq "ping") {
@@ -2714,7 +2716,29 @@ sub login_github()
   $r->print("<meta http-equiv='REFRESH' content='1;url=$uri_redirect'>");
   $r->print("</head>");
   $r->print("<body>");
-  $r->print("<p>this will log you in and send you back to landing page, ");
+  $r->print("<p>this will log you in with github and send you back to landing page, ");
+  $r->print("or do it <a href='$uri_redirect'>yourself</a></p>");
+  $r->print("</body>");
+  $r->print("</html>");
+}
+
+################################################################################
+sub login_nextcloud()
+################################################################################
+{
+  my $client_id = $nextcloudclientid;
+  my $uri_redirect = "https://cloud.grezl.eu/index.php/apps/oauth2/authorize?";
+  $uri_redirect .= "response_type=code&";
+  $uri_redirect .= "client_id=$client_id&";
+  $uri_redirect .= "state=yo&";
+  $uri_redirect .= "redirect_uri=https://api.openstreetmap.cz/table/oknextcloud";
+
+  $r->print("<html>");
+  $r->print("<head>");
+  $r->print("<meta http-equiv='REFRESH' content='1;url=$uri_redirect'>");
+  $r->print("</head>");
+  $r->print("<body>");
+  $r->print("<p>this will log you in with nextcloud and send you back to landing page, ");
   $r->print("or do it <a href='$uri_redirect'>yourself</a></p>");
   $r->print("</body>");
   $r->print("</html>");
@@ -2788,7 +2812,7 @@ sub login_ok_github()
 
   $r->print("<html>");
   $r->print("<head>");
-  $r->print("<meta http-equiv='REFRESH' content='10;url=$login_redirect'>");
+  $r->print("<meta http-equiv='REFRESH' content='1;url=$login_redirect'>");
   $r->print("</head>");
   $r->print("<body>");
   $r->print("<p>login ok? ....</p> <pre>$content </pre>");
@@ -2799,6 +2823,92 @@ sub login_ok_github()
   $r->print("<pre>" . Dumper(\$parsed) . "</pre>");
   $r->print("<pre>" .$response->as_string() . "</pre>");
 
+
+  $r->print("</body>");
+  $r->print("</html>");
+}
+
+################################################################################
+sub login_ok_nextcloud()
+################################################################################
+{
+
+  my $code = shift;
+
+  my $url = 'https://cloud.grezl.eu/index.php/apps/oauth2/api/v1/token';
+  my $ua = LWP::UserAgent->new();
+  my %form;
+  my %oauth2_data;
+
+  $form{'client_id'} = $nextcloudclientid;
+  $form{'client_secret'} = $nextcloudclientsecret;
+  $form{'code'} = $code;
+  $form{'grant_type'} = 'authorization_code';
+  $form{'redirect_uri'} = "http://api.openstreetmap.cz/webapps/login.html";
+  $form{'state'}='yo';
+
+  my $response = $ua->post($url, \%form);
+  my $content = $response->decoded_content();
+
+  $oauth2_data = decode_json($content);
+
+  my $acc = $oauth2_data->{access_token};
+  my $error = $oauth2_data->{error};
+  my $user = $oauth2_data->{user_id};
+
+  if ($error ne "") {
+    $error_result = 400;
+    wsyslog("info", "400: oauth2 returned error ($error)");
+    return;
+  }
+
+  if ($acc eq "") {
+    $error_result = 400;
+    wsyslog("info", "400: oauth2 no acc ($acc)");
+    return;
+  }
+
+#  my $uri_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+#  $r->headers_out->set("X-AuthW" => $acc);
+#  $url = "https://cloud.grezl.eu/ocs/v1.php/cloud/users/$user";
+#  $ua->default_header("Authorization" => "Bearer $acc");
+#  my $response = $ua->get($url);
+#  my $content = $response->decoded_content();
+# my $parsed = decode_json($content);
+
+  my $oauth_user = $user;
+  $oauth_user .= '@cloud.grezl.eu';
+
+  my $sessid = $request_id."-".time();
+
+  wsyslog("info", "login_ok_nextcloud:$oauth_user");
+
+  $c_out = Apache2::Cookie->new($r,
+             -name  => "oauth2sessid",
+             -value => $sessid,
+             -expires => '+10d',
+  );
+  $c_out->path("/");
+  $c_out->bake($r);
+
+  $query = "insert into session (acc, sessid, username) values ('$acc', '$sessid', '$oauth_user')";
+  my $sth = $dbh->prepare($query);
+  my $res = $sth->execute() or do {
+    wsyslog("info", "500: oauth2 ok  " . $DBI::errstr . " $query");
+    $error_result = 500;
+    return;
+  };
+
+  $login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+
+  $r->print("<html>");
+  $r->print("<head>");
+  $r->print("<meta http-equiv='REFRESH' content='1;url=$login_redirect'>");
+  $r->print("</head>");
+  $r->print("<body>");
+  $r->print("<p>login ok ....</p>");
+
+  $r->print("<h1>~=." . $oauth_user . " .=~</h1>");
 
   $r->print("</body>");
   $r->print("</html>");
