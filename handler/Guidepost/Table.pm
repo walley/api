@@ -79,7 +79,8 @@ my $PROJECT = "";
 my $PROJECTID = 0;
 
 my $image_root = "/var/www/api/";
-my $cdn =  "//cdn.openstreetmap.cz/";
+my $cdn =  "//cdn.openstreetmap.social/";
+my $main_site =  "openstreetmap.social";
 
 my $minlon;
 my $minlat;
@@ -418,7 +419,7 @@ sub error_400()
 <h1>This is bad</h1>
 <p>and you should feel bad</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -436,7 +437,7 @@ sub error_401()
 <h1>You can not do this</h1>
 <p>we do not know you</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -455,7 +456,7 @@ sub error_403()
 <h1>You can not do this</h1>
 <p>you are not allowed to</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -473,7 +474,7 @@ sub error_404()
 <h1>Not Found</h1>
 <p>We know nothing about this</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -491,7 +492,7 @@ sub error_412()
 <h1>FAAAAAAAAAAAAAIIIIIIIIIIIIIILLLLLLL!!!11</h1>
 <p>Do NOT fail our preconditions, not cool!</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at  Port 80</address>
 </body></html>
 ');
 }
@@ -509,7 +510,7 @@ sub error_500()
 <h1>YAY!</h1>
 <p>Error, sorry ;p</p>
 <hr>
-<address>openstreetmap.cz/2 Ulramegasuperdupercool/0.0.1 Server at ' . $hostname . ' Port 80</address>
+<address>'.$main_site.'/2 Ulramegasuperdupercool/0.0.1 Server at ' . $hostname . ' Port 80</address>
 </body></html>
 ');
 }
@@ -1018,7 +1019,7 @@ sub output_kml
   . "<li>ref:" . %$ref{ref}
   . "<li>attr:" . %$ref{attribution}
   . "</ul>"
-  . "<img src='http://api.openstreetmap.cz/".%$ref{url}."'>";
+  . "<img src='http://api.".$main_site."/".%$ref{url}."'>";
 
   $out .= " <Placemark id=\"w" . %$ref{id}."\">\n";
   $out .= "  <styleUrl>#guidepost</styleUrl>\n";
@@ -1155,7 +1156,7 @@ sub output_html
   @s = (
     "https://code.jquery.com/jquery-1.11.3.min.js",
     "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
-    "https://api.openstreetmap.cz/wheelzoom.js",
+    "https://api.".$main_site."/wheelzoom.js",
     "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
     "https://goodies.pixabay.com/jquery/tag-editor/jquery.caret.min.js",
     "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.js"
@@ -1418,7 +1419,7 @@ sub maplinks()
   $out .=  "<span>\n";
   $out .=  "<ul>\n";
 #  $out .=  "<li><a href='http://maps.yahoo.com/#mvt=m&lat=$lat&lon=$lon&mag=6&q1=$lat,$lon'>Yahoo</a>";
-  $out .=  "<li><a href='https://www.openstreetmap.cz/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.cz</a>";
+  $out .=  "<li><a href='https://".$main_site."/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.cz</a>";
   $out .=  "<li><a href='https://www.openstreetmap.org/?mlat=$lat&mlon=$lon&zoom=16#map=16/$lat/$lon'>osm.org</a>";
   $out .=  "<li><a href='https://mapy.cz/turisticka?x=$lon&y=$lat&z=18&source=coor&id=$lon%2C$lat'>Mapy.cz</a>";
   $out .=  "<li><a href='https://maps.google.com/maps?ll=$lat,$lon&q=loc:$lat,$lon&hl=en&t=m&z=16'>Google</a>";
@@ -1468,7 +1469,7 @@ sub report_illegal
   my $ret = "";
   $ret .= "<span title='" . &t("remove_picture") ."'>";
   $ret .= "<img src='" . $cdn . "img/delete.png' width=16 height=16>";
-  $ret .= "<a href='mailto:openstreetmap\@openstreetmap.cz?Subject=osm%20photo%20" . $id . "%20is%20illegal' target='_top'>".&t("illegal")."</a>";
+  $ret .= "<a href='mailto:openstreetmap\@".$main_site."?Subject=osm%20photo%20" . $id . "%20is%20illegal' target='_top'>".&t("illegal")."</a>";
   $ret .= "</span>";
   return $ret;
 }
@@ -1872,13 +1873,13 @@ sub page_header()
   <meta charset="utf-8">
   <meta http-equiv="cache-control" content="no-cache">
   <meta http-equiv="pragma" content="no-cache">
-  <link rel="stylesheet" type="text/css" href="//api.openstreetmap.cz/webapps/editor/editor.css">
+  <link rel="stylesheet" type="text/css" href="//api.'.$main_site.'/webapps/editor/editor.css">
 ';
 
   if ($title) {
     $out .= "<title>$title</title>";
   } else {
-    $out .= "<title>openstreetmap.cz guidepost editor</title>";
+    $out .= "<title>".$main_site." guidepost editor</title>";
   }
 
   foreach $i (@$links) {
