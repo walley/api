@@ -1,7 +1,7 @@
 /*
  rozcestniky pro osmcz
  Javascript code for openstreetmap.cz website
- Copyright (C) 2015
+ Copyright (C) 2015 - 2018 Michal Grézl
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
  */
 
 function rozcestniky(map, layersControl, overlays) {
-    // -- constructor --
 
     var xhr;
     var markers = L.markerClusterGroup({code: 'G'});

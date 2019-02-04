@@ -228,7 +228,7 @@ sub handler
   $api_param = $uri_components[3];
 
   if ($user eq "") {
-    $user = "anon.openstreetmap.cz";
+    $user = "anon.openstreetmap.social";
   }
 
   wsyslog('info', "request to $hostname from $remote_ip by $user");
@@ -620,7 +620,7 @@ sub authorized()
   );
 
 #  my $is_ok = ($user ~~ @ok_users);
-  my $is_ok = ($user ne "" and $user ne "anon.openstreetmap.cz");
+  my $is_ok = ($user ne "" and $user ne "anon.openstreetmap.social");
   my $ok = ($is_ok) ? "ok" : "bad";
 
   wsyslog('info', "authorized(): " . $user . " is " . $ok . " from " . $remote_ip);
@@ -2126,7 +2126,7 @@ sub review_form
   $res = $dbh->selectall_arrayref($query);
   $out .= $DBI::errstr;
 
-  my @a = ("https://code.jquery.com/jquery-1.11.3.min.js", "https://api.openstreetmap.cz/wheelzoom.js");
+  my @a = ("https://code.jquery.com/jquery-1.11.3.min.js", "https://api.openstreetmap.social/wheelzoom.js");
   $out .= &page_header(\@a);
 
   $out .= "<script>";
@@ -2732,7 +2732,7 @@ sub login_nextcloud()
   $uri_redirect .= "response_type=code&";
   $uri_redirect .= "client_id=$client_id&";
   $uri_redirect .= "state=yo&";
-  $uri_redirect .= "redirect_uri=https://api.openstreetmap.cz/table/oknextcloud";
+  $uri_redirect .= "redirect_uri=https://api.openstreetmap.social/table/oknextcloud";
 
   $r->print("<html>");
   $r->print("<head>");
@@ -2776,7 +2776,7 @@ sub login_ok_github()
 
   $r->headers_out->set("X-AuthW" => $acc);
 
-  my $uri_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  my $uri_redirect = "http://api.openstreetmap.social/webapps/login.html";
 
   $url = "https://api.github.com/user?access_token=$acc";
   my $response = $ua->get($url);
@@ -2808,7 +2808,7 @@ sub login_ok_github()
     return;
   };
 
-  $login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  $login_redirect = "http://api.openstreetmap.social/webapps/login.html";
   #$login_redirect = "http://grezl.eu/login.html";
 
   $r->print("<html>");
@@ -2845,7 +2845,7 @@ sub login_ok_nextcloud()
   $form{'client_secret'} = $nextcloudclientsecret;
   $form{'code'} = $code;
   $form{'grant_type'} = 'authorization_code';
-  $form{'redirect_uri'} = "http://api.openstreetmap.cz/webapps/login.html";
+  $form{'redirect_uri'} = "http://api.openstreetmap.social/webapps/login.html";
   $form{'state'}='yo';
 
   my $response = $ua->post($url, \%form);
@@ -2900,7 +2900,7 @@ sub login_ok_nextcloud()
     return;
   };
 
-  $login_redirect = "http://api.openstreetmap.cz/webapps/login.html";
+  $login_redirect = "http://api.openstreetmap.social/webapps/login.html";
 
   $r->print("<html>");
   $r->print("<head>");
@@ -3273,7 +3273,7 @@ sub assign_to_project
     return;
   }
 
-  if ($user eq "anon.openstreetmap.cz") {
+  if ($user eq "anon.openstreetmap.social") {
     wsyslog("info", "action denied, must be logged in");
     $error_result = 401;
     return;
@@ -3316,7 +3316,7 @@ sub remove_from_project
     return;
   }
 
-  if ($user eq "anon.openstreetmap.cz") {
+  if ($user eq "anon.openstreetmap.social") {
     wsyslog("info", "action denied, must be logged in");
     $error_result = 401;
     return;

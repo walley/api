@@ -3,32 +3,6 @@
 //= depend_on application.yml
 
 OSM = {
-//<% if defined?(PIWIK) %>
-//PIWIK:                 <%= PIWIK.to_json %>,
-//<% end %>
-//MAX_REQUEST_AREA:      <%= MAX_REQUEST_AREA.to_json %>,
-//SERVER_URL:            <%= SERVER_URL.to_json %>,
-//API_VERSION:           <%= API_VERSION.to_json %>,
-//STATUS:                <%= STATUS.to_json %>,
-//MAX_NOTE_REQUEST_AREA: <%= MAX_NOTE_REQUEST_AREA.to_json %>,
-//OVERPASS_URL:          <%= OVERPASS_URL.to_json %>,
-//NOMINATIM_URL:         <%= NOMINATIM_URL.to_json %>,
-//<% if defined?(MAPQUEST_KEY) %>
-//MAPQUEST_KEY:          <%= MAPQUEST_KEY.to_json %>,
-//<% end %>
-//<% if defined?(MAPZEN_VALHALLA_KEY) %>
-//MAPZEN_VALHALLA_KEY:   <%= MAPZEN_VALHALLA_KEY.to_json %>,
-//<% end %>
-//MARKER_GREEN:          <%= image_path("marker-green.png").to_json %>,
-//MARKER_RED:            <%= image_path("marker-red.png").to_json %>,
-//
-//MARKER_ICON:           <%= image_path("images/marker-icon.png").to_json %>,
-//MARKER_ICON_2X:        <%= image_path("images/marker-icon-2x.png").to_json %>,
-//MARKER_SHADOW:         <%= image_path("images/marker-shadow.png").to_json %>,
-//
-//NEW_NOTE_MARKER:       <%= image_path("new_note_marker.png").to_json %>,
-//OPEN_NOTE_MARKER:      <%= image_path("open_note_marker.png").to_json %>,
-//CLOSED_NOTE_MARKER:    <%= image_path("closed_note_marker.png").to_json %>,
 
     apiUrl: function (object) {
         var url = "/api/" + OSM.API_VERSION + "/" + object.type + "/" + object.id;
@@ -101,11 +75,6 @@ OSM = {
             mapParams.lon = parseFloat(params.mlon);
             mapParams.lat = parseFloat(params.mlat);
             mapParams.zoom = parseInt(params.zoom || 12);
-        } else if (loc = Cookies.get('_osm_location')) {  //edit osmcz
-            loc = loc.split("|");
-            mapParams.lon = parseFloat(loc[0]);
-            mapParams.lat = parseFloat(loc[1]);
-            mapParams.zoom = parseInt(loc[2]);
         } else if (OSM.home) {
             mapParams.lon = OSM.home.lon;
             mapParams.lat = OSM.home.lat;

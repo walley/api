@@ -39,47 +39,41 @@ section {
 
   <ul>
     <li>151221: pridana polozka note - Poznamka</li>
-
     <li>151228: oznaceni pro smazani</li>
-
     <li>151229: mazani funguje, mazani je v podstate akce ktera se
-    nebude delat, mazat se budou pouze fotky duplicitni a
-    nesouvisejici z turistikou.</li>
-
+    nebude delat, mazat se budou pouze fotky duplicitni a ilegalni.</li>
     <li>160302: tagy, api call na ziskani</li>
-
     <li>160307: tagy, pridavani, autocomplete</li>
-
     <li>160315: tagy, vyhledavani, cistej JSON output</li>
-
     <li>160323: move, exif</li>
-
     <li>160329: ping, robot</li>
-
     <li>180520: gpx, json</li>
-
     <li>180524: time</li>
-
     <li>180613: projekty start</li>
-
-    <li>180817: projekty, session a prihlaseni v podsate
-    funguje.</li>
+    <li>180817: projekty, session a prihlaseni v podsate funguje.</li>
+    <li>181001: migrace na openstreetmap.social</li>
   </ul>
   <hr>
 
-  <h1>public api</h1>
+  <h1>Public API</h1>
 
   <ul>
     <li><section>all</section>
-
-      <p>Zobrazi vsechny zaznamy</p>
+      <dl>
+        <dt>GET</dt>
+        <dd>Zobrazi vsechny zaznamy</dd>
+        <dd><a href='http://api.openstreetmap.social/table/all'>example</a></dd>
+        <dd><a href='http://api.openstreetmap.social/table/all?output=json'>example json output</a></dd>
+      </dl>
     </li>
 
     <li><section>count</section>
-
-      <p>Zobrazi pocet zaznamu</p>
+      <dl>
+        <dt>GET</dt>
+        <dd>Zobrazi pocet zaznamu</dd>
+        <dd><a href='http://api.openstreetmap.social/table/count'>example</a></dd>
+      </dl>
     </li>
-
     <li><section>get/from_id/to_id</section>
 
       <p><a href=
@@ -322,7 +316,7 @@ zobrazi uzivatelske jmeno prihlaseneho uzivatele
 
         <li>geojson - vystup v geojson</li>
 
-        <li>kml - tbd</li>
+        <li>kml - vystup v kml (Google Earth)</li>
 
         <li>gpx - gpx s extension na vzdalenost od garminu</li>
 

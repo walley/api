@@ -16,73 +16,11 @@ function initmap() {
         code: 'd'
     });
 
-    var ocm = L.tileLayer("http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://opencyclemap.org">OpenCycleMap</a>',
-        code: 'c'
-    });
-
-    var hikebike = L.tileLayer("http://toolserver.org/tiles/hikebike/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://www.hikebikemap.de">Hike &amp; Bike Map</a>',
-        code: 'h'
-    });
-
-    var mtb = L.tileLayer("http://tile.mtbmap.cz/mtbmap_tiles/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://www.mtbmap.cz">mtbmap.cz</a>',
-        code: 'm'
-    });
-
-    var vodovky = L.tileLayer('http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg', {
-        attribution: 'Map data CC-BY-SA <a href="http://openstreetmap.org">OSM.org</a>, imagery <a href="http://maps.stamen.com">Stamen Design</a>',
-        maxZoom: 18,
-        code: 's'
-    });
-
-    var kct = L.tileLayer("http://tile.poloha.net/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://www.poloha.net">poloha.net</a>',
-        code: 'k'
-    });
-
-    var kctOverlay = L.tileLayer("http://tile.poloha.net/kct/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://www.poloha.net">poloha.net</a>',
-        opacity: 0.6,
-        code: 'K'
-    });
-
-    var vrstevniceOverlay = L.tileLayer("http://tile.poloha.net/hills/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: osmAttr + ', <a href="http://www.poloha.net">poloha.net</a>',
-        opacity: 0.6,
-        code: 'V'
-    });
-
-    var ortofoto = L.tileLayer.wms('http://geoportal.cuzk.cz/WMS_ORTOFOTO_PUB/service.svc/get', {
-        layers: 'GR_ORTFOTORGB',
-        format: 'image/jpeg',
-        transparent: false,
-        crs: L.CRS.EPSG4326,
-        minZoom: 7,
-        maxZoom: 22,
-        attribution: '<a href="http://www.cuzk.cz">ČÚZK</a>',
-        code: 'o'
-    });
-
     baseLayers = {
-        "KČT trasy poloha.net": kct,
-        "MTBMap.cz": mtb,
         "OpenStreetMap Mapnik": osm,
-        "OpenCycleMap": ocm,
-        "Hike&bike": hikebike,
-        "Vodovky": vodovky,
-        "Ortofoto ČÚZK": ortofoto
     };
+
     overlays = {
-        "KČT trasy poloha.net": kctOverlay,
-        "Vrstevnice": vrstevniceOverlay
     };
 
     // -------------------- map controls --------------------
@@ -142,13 +80,8 @@ function initmap() {
 
     // pamatování poslední polohy v cookie a hashi
     map.on('moveend zoomend layeradd layerremove', function () {
-        lastHash = OSM.formatHash(map)
-        location.hash = lastHash;
-        Cookies.set("_osm_location", OSM.locationCookie(map), {expires: 31});
     });
 
-
-    // pokud přepnutá baselayer je mimo zoom, rozumně odzoomovat //TODO ověřit že funguje
     map.on("baselayerchange", function (e) {
         if (map.getZoom() > e.layer.options.maxZoom) {
             map.setView(map.getCenter(), e.layer.options.maxZoom, {reset: true});
