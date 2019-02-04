@@ -8,7 +8,7 @@ function xxassign()
 
   term = $("#assign").val();
 
-  var jqxhr = $.post("https://api.openstreetmap.cz/table/project/ " + name,
+  var jqxhr = $.post("https://api.openstreetmap.social/table/project/ " + name,
                      { gp_id: term, project: name })
   .done(function() {
   })
@@ -25,7 +25,7 @@ function xxdelete()
   var gp_id = $("#delinput").val();
 
   $.ajax({
-    url: 'https://api.openstreetmap.cz/table/project',
+    url: 'https://api.openstreetmap.social/table/project',
     method: 'DELETE',
     data: { gp_id: gp_id, project: name },
     success: function(result) {
@@ -57,7 +57,7 @@ function set_username()
 function get_username()
 {
 
-  var jqxhr = $.get("https://api.openstreetmap.cz/table/username/")
+  var jqxhr = $.get("https://api.openstreetmap.social/table/username/")
   .done(function(data) {
     username = data;
     set_username();
@@ -75,11 +75,11 @@ function refresh_list()
   name = get_name();
   $( "#resultget" ).empty();
 
-//  $.get( "https://api.openstreetmap.cz/table/project/"+name, function( data ) {
+//  $.get( "https://api.openstreetmap.social/table/project/"+name, function( data ) {
 //    $( "#resultget" ).append(data);
 //  });
 
-  $.getJSON("https://api.openstreetmap.cz/table/project/"+name,
+  $.getJSON("https://api.openstreetmap.social/table/project/"+name,
     {
       output: "json",
     },
@@ -89,7 +89,7 @@ function refresh_list()
       manager = result.manager;
       $("#manager").html(manager);
       $.each(result.imgs, function(index, value) {
-        data = index + ": <a href='https://api.openstreetmap.cz/" + value[1] + "'>"+value[0]+"</a>";
+        data = index + ": <a href='https://api.openstreetmap.social/" + value[1] + "'>"+value[0]+"</a>";
         $("#resultget").append(data);
         $("#resultget").append(" [remove]");
         $("#resultget").append("\n<br>");
