@@ -47,7 +47,7 @@
 <script>
   get_username();
 
-  $.getJSON("https://api.openstreetmap.cz/table/projectlist?output=json", function(result) {
+  $.getJSON("https://api.openstreetmap.social/table/projectlist?output=json", function(result) {
     var options = $("#options");
     $.each(result, function(index, value) {
       //alert( index + ": " + value[0] + " " + value[1] );

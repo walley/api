@@ -7,12 +7,14 @@
   <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 
 <script>
+var host = "api.openstreetmap.social";
+
 function xxpost()
 {
   term = $("#addinput").val();
   alert(term);
 
-  var jqxhr = $.post( "https://api.openstreetmap.cz/table/projectlist", { add: term, time: "2pm" })
+  var jqxhr = $.post( "https://" + host + "/table/projectlist", { add: term, time: "2pm" })
   .done(function() {
     alert( "second success" );
   })
@@ -30,7 +32,7 @@ function xxdelete()
   alert(term);
 
 $.ajax({
-    url: 'https://api.openstreetmap.cz/table/projectlist',
+    url: 'https://" + host + "/table/projectlist',
     method: 'DELETE',
     data: { project: term},
     success: function(result) {
@@ -52,7 +54,7 @@ $.ajax({
 
 <h2>List of projects (maintainer)</h2>
 <script>
-$.get( "https://api.openstreetmap.cz/table/projectlist", function( data ) {
+$.get( "https://" + host + "/table/projectlist", function( data ) {
  // alert( "Data Loaded: " + data );
     $( "#resultget" ).empty().append(data);
 });

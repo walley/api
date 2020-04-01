@@ -2348,18 +2348,21 @@ sub delete_id
   wsyslog('info', "deleting id: " . $id);
 
   my $query = "select * from guidepost where id=$id";
-#  $res = $dbh->selectall_hashref($query, { Slice => {} });
   $res = $dbh->selectall_hashref($query, 'id');
 
   my $original_file =  $image_root . $res->{$id}->{url};
   my $new_file = $image_root . "/deleted/" . basename($res->{$id}->{url});
 
-#move picture to backup directory
-  wsyslog('info', "delete_id: Moving $original_file to $new_file");
-  if (!move($original_file, $new_file)) {
-    wsyslog('info', "delete_id: Move failed($original_file,$new_file): $!");
-    $error_result = 500;
-    return;
+  if (-e $original_file) {
+    #move picture to backup directory
+    wsyslog('info', "delete_id: Moving $original_file to $new_file");
+    if (!move($original_file, $new_file)) {
+      wsyslog('info', "delete_id: Move failed($original_file,$new_file): $!");
+      $error_result = 500;
+      return;
+    }
+  } else {
+    wsyslog('info', "delete_id: trying to move but $original_file was not found");
   }
 
 #delete from db
