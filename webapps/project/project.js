@@ -56,10 +56,13 @@ function set_username()
 
 function get_username()
 {
+  var jqxhr;
 
-  var jqxhr = $.get("https://api.openstreetmap.social/table/username/")
+  $.ajaxSetup({xhrFields: { withCredentials: true } });
+  jqxhr= $.get("https://api.openstreetmap.social/table/username/")
   .done(function(data) {
     username = data;
+    alert("username "+data);
     set_username();
   })
   .fail(function() {
