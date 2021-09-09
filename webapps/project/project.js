@@ -49,30 +49,6 @@ function get_manager(project)
   alert(project);
 }
 
-function set_username()
-{
-//  get_username();
-//alert ('username is '+username);
-  $("#username").html(username);
-}
-
-function get_username()
-{
-  var jqxhr;
-
-  $.ajaxSetup({xhrFields: { withCredentials: true } });
-  jqxhr= $.get("https://api.openstreetmap.social/table/username/")
-  .done(function(data) {
-    username = data;
-    set_username();
-  })
-  .fail(function() {
-    alert("username error");
-  })
-  .always(function() {
-  });
-}
-
 function refresh_list()
 {
 

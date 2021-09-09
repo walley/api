@@ -20,16 +20,12 @@ function init_menu()
     }
   );
 
-  $("#menu").toggle();
-
+//  $("#menu").toggle(); 
   get_username();
-
 }
 
 function set_username()
 {
-//  get_username();
-//alert ('username is '+username);
   $("#username").html(username);
 }
 

@@ -17,7 +17,7 @@
 .navmenu {
   border-style:double;
   display: inline-block;
- height:24px;
+  height:24px;
 }
 
 .initially_hidden {
