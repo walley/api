@@ -1,0 +1,25 @@
+.topcorner {
+  position:absolute;
+  top:0px;
+  right:0px;
+}
+
+.topcornermenu {
+  position:absolute;
+  top:30px;
+  right:0;
+}
+
+.ui-menu {
+  width: 200px;
+}
+
+.navmenu {
+  border-style:double;
+  display: inline-block;
+ height:24px;
+}
+
+.initially_hidden {
+  display: none;
+}
