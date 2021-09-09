@@ -11,6 +11,7 @@ function xxassign()
   var jqxhr = $.post("https://api.openstreetmap.social/table/project/ " + name,
                      { gp_id: term, project: name })
   .done(function() {
+    refresh_list();
   })
   .fail(function(xhr, status, error) {
     alert("error "+ xhr.status + " " + error);
@@ -30,6 +31,7 @@ function xxdelete()
     data: { gp_id: gp_id, project: name },
     success: function(result) {
       alert("done");
+      refresh_list();
     },
     error: function(xhr,status,error) {
       alert("error "+ xhr.status + " " + error);
@@ -62,7 +64,6 @@ function get_username()
   jqxhr= $.get("https://api.openstreetmap.social/table/username/")
   .done(function(data) {
     username = data;
-    alert("username "+data);
     set_username();
   })
   .fail(function() {
