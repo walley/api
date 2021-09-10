@@ -16,7 +16,7 @@
 </head>
 <body>
   <h1>Help</h1>
-  <p><b>tagy:</b> stitky popisujici co se nachazi na fotce. Informace o obsahu fotky, o tom co na ni vidime. Prosim <b>nevkladejte</b> tagy ve smyslu osm - zadne ele:123 nebo tourism:information - nema zadny smysl duplikovat openstreetmap data. Vyjimka je ref:xxx, zato je nutne otagovat vsechny mozne referencni cisla, ktere na fotografii nalezneme. Je vhodne vlozit tag rozcestnik, pokud se na fotce nachazi, dale treba zelena, nebo cyklo atd. Je nutne taky otagovat mapy (mapa), nebo fotku turisticke znacky oznacujici konec/zacatek nebo treba odbocku k hradu ktera nema vlastni rozcestnik (znaceni). Strom netagujte, byly by vsude.</p>
+  <p><b>tagy:</b> stitky popisujici co se nachazi na fotce. Informace o obsahu fotky, o tom co na ni vidime. Prosim <b>nevkladejte</b> tagy ve smyslu osm - zadne ele:123 nebo tourism:information - nema zadny smysl duplikovat openstreetmap data. Vyjimka je ref:xxx, zato je nutne otagovat vsechny mozne referencni cisla, ktere na fotografii nalezneme. Je vhodne vlozit tag rozcestnik, pokud se na fotce nachazi, dale treba zelena, nebo cyklo atd. Je nutne taky otagovat mapy (mapa), nebo fotku turisticke znacky oznacujici konec/zacatek nebo treba odbocku k hradu ktera nema vlastni rozcestnik (znaceni).</p>
   <h2>Changelog</h2>
   <ul>
     <li>151221: pridana polozka note - Poznamka</li>
@@ -39,107 +39,123 @@
   <ul>
     <li>
       <section>
-        all
-      </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>Zobrazi vsechny zaznamy</dd>
-        <dd>
-          <a href='https://api.openstreetmap.social/table/all'>example</a>
-        </dd>
-        <dd>
-          <a href='https://api.openstreetmap.social/table/all?output=json'>example json output</a>
-        </dd>
-      </dl>
-    </li>
-    <li>
-      <section>
-        count
-      </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>Zobrazi pocet zaznamu</dd>
-        <dd>
-          <a href='https://api.openstreetmap.social/table/count'>example</a>
-        </dd>
-      </dl>
-    </li>
-    <li>
-      <section>
-        get/from_id/to_id
-      </section>
-      <p><a href='https://api.openstreetmap.social/table/get/1/3?output=html'>example</a></p>
-    </li>
-    <li>
-      <section>
-        leaderboard
+        <h3>all</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>Zobrazi vsechny zaznamy</dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/all'>example</a>
+          </dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/all?output=json'>example json output</a>
+          </dd>
+        </dl>
       </section>
     </li>
     <li>
       <section>
-        username
+        <h3>count</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>Zobrazi pocet zaznamu</dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/count'>example</a>
+          </dd>
+        </dl>
       </section>
-      <dl>
-        <dt>zobrazi uzivatelske jmeno prihlaseneho uzivatele</dt>
-      </dl>
     </li>
     <li>
       <section>
-        name
+        <h3>get</h3>
+        <dl>
+          <dt>zobrazi uzivatelske jmeno prihlaseneho uzivatele</dt>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/get/1/3?output=html'>example</a>
+          </dd>
+          <dt>parametry</dt>
+          <dd>/from_id</dd>
+          <dd>/to_id</dd>
+        </dl>
       </section>
     </li>
     <li>
       <section>
-        id/hodnota
+        <h3>leaderboard</h3>
+        <dl>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/leaderboard'>example</a>
+          </dd>
+        </dl>
       </section>
-      <p>Zobrazí položku db s id rovnajici se hodnota<br>
-      <a href='https://api.openstreetmap.social/table/id/100?output=html'>example</a></p>
     </li>
     <li>
       <section>
-        ref/hodnota
+        <h3>username</h3>
+        <dl>
+          <dt>zobrazi uzivatelske jmeno prihlaseneho uzivatele</dt>
+        </dl>
       </section>
-      <p>Zobrazí vsechny položky db s ref rovnajici se hodnota<br>
-      <a href='https://api.openstreetmap.social/table/ref/100?output=html'>example</a></p>
     </li>
     <li>
       <section>
-        name/hodnota
+        <h3>name</h3>
+        <dl>
+          <dd></dd>
+        </dl>
       </section>
-      <p>Zobrazí vsechny položky db se jmenem autora rovnajici se hodnota<br>
-      <a href='https://api.openstreetmap.social/table/name/bublifuk?output=html'>example</a></p>
     </li>
     <li>
       <section>
-        note/hodnota
+        <h3>id</h3>/hodnota
+        <p>Zobrazí položku db s id rovnajici se hodnota<br>
+        <a href='https://api.openstreetmap.social/table/id/100?output=html'>example</a></p>
       </section>
-      <p>Zobrazí vsechny položky db s poznamka rovnajici se hodnota<br>
-      <a href='https://api.openstreetmap.social/table/note/100?output=html'>example</a></p>
     </li>
     <li>
       <section>
-        isedited/column/id
+        <h3>ref</h3>/hodnota
+        <p>Zobrazí vsechny položky db s ref rovnajici se hodnota<br>
+        <a href='https://api.openstreetmap.social/table/ref/100?output=html'>example</a></p>
       </section>
-      <p>vrati pocet editaci atributu col pro id</p>
-      <p>column - ref|note|...</p>
     </li>
     <li>
       <section>
-        isdeleted/id
+        <h3>name</h3>/hodnota
+        <p>Zobrazí vsechny položky db se jmenem autora rovnajici se hodnota<br>
+        <a href='https://api.openstreetmap.social/table/name/bublifuk?output=html'>example</a></p>
       </section>
-      <p>vrati zda id je oznaceno pro smazani</p>
     </li>
     <li>
       <section>
-        close
+        <h3>note</h3>/hodnota
+        <p>Zobrazí vsechny položky db s poznamka rovnajici se hodnota<br>
+        <a href='https://api.openstreetmap.social/table/note/100?output=html'>example</a></p>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>
-          vrati polozky ve vzdalenosti distance od lat,lon<br>
-          parametry lat,lon,distance, vzdy nastavi geojson output <a href='https://api.openstreetmap.social/table/close?lat=49.709297&amp;lon=17.07934&amp;distance=1000'>example</a>
-        </dd>
-      </dl>
+    </li>
+    <li>
+      <section>
+        <h3>isedited</h3>/column/id
+        <p>vrati pocet editaci atributu col pro id</p>
+        <p>column - ref|note|...</p>
+      </section>
+    </li>
+    <li>
+      <section>
+        <h3>isdeleted</h3>/id
+        <p>vrati zda id je oznaceno pro smazani</p>
+      </section>
+    </li>
+    <li>
+      <section>
+        <h3>close</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>
+            vrati polozky ve vzdalenosti distance od lat,lon<br>
+            parametry lat,lon,distance, vzdy nastavi geojson output <a href='https://api.openstreetmap.social/table/close?lat=49.709297&amp;lon=17.07934&amp;distance=1000'>example</a>
+          </dd>
+        </dl>
+      </section>
     </li>
     <li>
       <section>
@@ -154,7 +170,7 @@
         </dl>
       </section>
     </li>
-    <li>tags/add/id/value - no longer used</li>
+    <li>deprecated: tags/add/id/value - no longer used</li>
     <li>
       <section>
         <h3>tags/hashtag/key:value</h3>
@@ -169,151 +185,175 @@
     </li>
     <li>
       <section>
-        setbyid
-      </section>POST<br>
-      nastavuje vlastnost fotky<br>
-      post parametry: id:specialni format - "vlastnost_id" vlastnost je sloupec v db, value
-    </li>
-    <li>
-      <section>
-        move
-      </section>POST<br>
-      presun fotky<br>
-      post parametry: id, lat, lon
-    </li>
-    <li>
-      <section>
-        exif/id
+        <h3>setbyid</h3>
+        <dl>
+          <dt>POST</dt>
+          <dd>nastavuje vlastnost fotky</dd>
+          <dt>post parametry:</dt>
+          <dd>id:specialni format - "vlastnost_id" vlastnost je sloupec v db</dd>
+          <dd>value</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dt>vraci exif fotky<br>
-        parametry: id</dt>
-      </dl>
     </li>
     <li>
       <section>
-        ping
+        <h3>move</h3>
+        <dl>
+          <dt>POST</dt>
+          <dd>presun fotky</dd>
+          <dt>post parametry:</dt>
+          <dd>id</dd>
+          <dd>lat</dd>
+          <dd>lon</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>vraci pong</dd>
-      </dl>
     </li>
     <li>
       <section>
-        robot
+        <h3>exif</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>vraci exif fotky</dd>
+          <dt>parametry:</dt>
+          <dd>/id</dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/exif/100'>example</a>
+          </dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>spusti automaticke schvaleni nekterych akci.<br>
-        (pridani tagu, tbd...)</dd>
-        <dd></dd>
-      </dl>
     </li>
     <li>
       <section>
-        serverinfo
+        <h3>ping</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>vraci pong</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>dump %ENV, privileged_access</dd>
-      </dl>
     </li>
     <li>
       <section>
-        notify
-      </section>POST<br>
-      post parametry: lat, lon, text<br>
-      posle zpravu adminovy serveru
-    </li>
-    <li>
-      <section>
-        licenseinfo
+        <h3>robot</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>spusti automaticke schvaleni nekterych akci.<br>
+          (pridani tagu, tbd...)</dd>
+          <dd></dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/robot'>example</a>
+          </dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>vypise zname licence, jine nelze pouzit</dd>
-      </dl>
     </li>
     <li>
       <section>
-        sequence/xy
+        <h3>serverinfo</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>dump %ENV, privileged_access</dd>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/serverinfo'>example</a>
+          </dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dt>parametry: 2 pismena zacatku ref rozcestniku, vypise seznam vsech 1000 referenci, DB znamena ze je v db</dt>
-      </dl>
     </li>
     <li>
       <section>
-        remove
+        <h3>notify</h3>
+        <dl>
+          <dt>POST</dt>
+          <dt>post parametry: lat, lon, text<br>
+          posle zpravu adminovy serveru</dt>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dt>parametry: id</dt>
-      </dl>
+    </li>
+    <li>
+      <section>
+        <h3>licenseinfo</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>vypise zname licence, jine nelze pouzit</dd>
+        </dl>
+      </section>
+    </li>
+    <li>
+      <section>
+        <h3>sequence/xy</h3>
+        <dl>
+          <dt>GET</dt>
+          <dt>parametry: 2 pismena zacatku ref rozcestniku, vypise seznam vsech 1000 referenci, DB znamena ze je v db</dt>
+        </dl>
+      </section>
+    </li>
+    <li>
+      <section>
+        <h3>remove</h3>
+        <dl>
+          <dt>GET</dt>
+          <dt>parametry: id</dt>
+        </dl>
+      </section>
     </li>
     <li>
       <section>
         timeadded
+        <dl>
+          <dt>GET</dt>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/timeadded/14000?output=html'>example</a>
+          </dd>
+          <dt>parametry: id</dt>
+          <dd>zobrazi cas pridani fotky, pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>
-          <a href='https://api.openstreetmap.social/table/timeadded/14000?output=html'>example</a>
-        </dd>
-        <dt>parametry: id</dt>
-        <dd>zobrazi cas pridani fotky, pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
-      </dl>
     </li>
     <li>
       <section>
         timetaken
+        <dl>
+          <dt>GET</dt>
+          <dd>
+            <a href='https://api.openstreetmap.social/table/timetaken/100?output=html'>example</a>
+          </dd>
+          <dt>parametry: id</dt>
+          <dd>zobrazi cas vyfoceni z exifu pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>
-          <a href='https://api.openstreetmap.social/table/timetaken/100?output=html'>example</a>
-        </dd>
-        <dt>parametry: id</dt>
-        <dd>zobrazi cas vyfoceni z exifu pokud je znam, format zatim pouze 2017-07-17 15:58:39</dd>
-      </dl>
     </li>
     <li>
       <section>
         project/nazev TBD
+        <dl>
+          <dt>GET</dt>
+          <dd>vrati seznam fotek v projektu</dd>
+          <dt>POST</dt>
+          <dd>prida fotku do projektu</dd>
+          <dt>DELETE</dt>
+          <dd>smaze fotku z projektu</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>vrati seznam fotek v projektu</dd>
-        <dt>POST</dt>
-        <dd>prida fotku do projektu</dd>
-        <dt>DELETE</dt>
-        <dd>smaze fotku z projektu</dd>
-      </dl>
     </li>
     <li>
       <section>
         projectlist
+        <dl>
+          <dt>GET</dt>
+          <dd>vrati seznam projektu</dd>
+          <dt>POST</dt>
+          <dd>prida projekt</dd>
+          <dt>DELETE</dt>
+          <dd>smaze projekt</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>vrati seznam projektu</dd>
-        <dt>POST</dt>
-        <dd>prida projekt</dd>
-        <dt>DELETE</dt>
-        <dd>smaze projekt</dd>
-      </dl>
     </li>
     <li>
       <section>
-        loginxxx
+        <h3>loginxxx</h3>
+        <dl>
+          <dt>GET</dt>
+          <dd>iniciuje logovaci proces pro xxx platformu, xxx je github, nextcloud(tbd)</dd>
+        </dl>
       </section>
-      <dl>
-        <dt>GET</dt>
-        <dd>iniciuje logovaci proces pro xxx platformu, xxx je github, nextcloud(tbd)</dd>
-      </dl>
     </li>
     <li>
       <section>
@@ -325,8 +365,8 @@
       </section>
     </li>
   </ul><br>
-  <h2>parametry pro definici a filtrovany vystupu</h2><code>format: url?parametr=hodnota&amp;parametr2=hodnota2</code>
-  <p>zmeni format vystupu, nebo vrati http status 400</p>
+  <h2>parametry pro definici a filtrovany vystupu</h2>
+  <p><code>format: url?parametr=hodnota&amp;parametr2=hodnota2</code> zmeni format vystupu, nebo vrati http status 400</p>
   <ol>
     <li><b>bbox</b> vymezuje oblast pro dotaz =-20,-40,60,40</li>
     <li>
