@@ -1,7 +1,3 @@
-//https://github.com/openstreetmap/openstreetmap-website/blob/e20bb507f122f73d18021bf93efe85fc2e189dfb/app/assets/javascripts/osm.js.erb
-
-//= depend_on application.yml
-
 OSM = {
 
     apiUrl: function (object) {
@@ -191,3 +187,4 @@ OSM = {
                 ));
     }
 };
+
