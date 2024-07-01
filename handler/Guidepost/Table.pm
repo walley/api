@@ -1,6 +1,6 @@
 #
 #   Guideposts, mod_perl2 handler
-#   Copyright (C) 2015 - 2018 Michal Grezl
+#   Copyright (C) 2015 - 2024 Michal Grezl
 #                 2016 Marián Kyral
 #                 2016 Miroslav Suchý
 #
@@ -1159,12 +1159,12 @@ sub output_html
     "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
     "https://api.".$main_site."/wheelzoom.js",
     "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
-    "https://goodies.pixabay.com/jquery/tag-editor/jquery.caret.min.js",
-    "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.js"
+    "https://cdn.openstreetmap.social/tageditor/jquery.caret.min.js",
+    "https://cdn.openstreetmap.social/tageditor/jquery.tag-editor.js"
   );
 
   @l = (
-    "https://goodies.pixabay.com/jquery/tag-editor/jquery.tag-editor.css"
+    "https://cdn.openstreetmap.social/tageditor/jquery.tag-editor.css"
   );
 
 #  if ($is_https) {
@@ -1443,8 +1443,14 @@ sub static_map()
   my ($lat, $lon) = @_;
   my $out = "<!-- static map -->";
 
-  $static_map = "https://open.mapquestapi.com/staticmap/v4/getmap?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$lat,$lon&zoom=15&size=200,200&type=map&imagetype=png&pois=x,$lat,$lon";
-#  $out .=  "<img src='http://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lon&zoom=14&size=200x200&maptype=mapnik&markers=$lat,$lon,lightblue1' />";
+  my $static_map;
+
+#  $static_map = "https://www.mapquestapi.com/staticmap/v5/map?key=Fmjtd%7Cluu22qu1nu%2Cbw%3Do5-h6b2h&center=$lat,$lon&zoom=15&size=200,200&type=map&imagetype=png&pois=x,$lat,$lon";
+#  $static_map = http://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lon&zoom=14&size=200x200&maptype=mapnik&markers=$lat,$lon,lightblue1'
+#  $static_map = "https://api.maptiler.com/maps/streets-v2/static/$lon,$lat,15/200x200.png?key=L67tzaVr8iKvxHky6fRl";
+
+  $static_map = "https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=200&height=200&center=lonlat:$lon,$lat&zoom=15&apiKey=d903b2dc005f4f139d97a84af7b84375";
+
   $out .=  "<img src='".$static_map."'/>";
   return $out;
 }
