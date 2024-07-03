@@ -1155,10 +1155,10 @@ sub output_html
   my ($query) = @_;
 
   @s = (
-    "https://code.jquery.com/jquery-1.11.3.min.js",
+    "https://code.jquery.com/jquery-1.12.4.min.js",
     "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
     "https://api.".$main_site."/wheelzoom.js",
-    "https://code.jquery.com/ui/1.10.2/jquery-ui.min.js",
+    "https://code.jquery.com/ui/1.13.3/jquery-ui.min.js",
     "https://cdn.openstreetmap.social/tageditor/jquery.caret.min.js",
     "https://cdn.openstreetmap.social/tageditor/jquery.tag-editor.js"
   );
@@ -1166,12 +1166,6 @@ sub output_html
   @l = (
     "https://cdn.openstreetmap.social/tageditor/jquery.tag-editor.css"
   );
-
-#  if ($is_https) {
-#    $https = "https";
-#  } else {
-#    $https = "http";
-#  }
 
   $https = &https();
 
@@ -1690,11 +1684,11 @@ sub gp_line()
   $out .= &edit_stuff($id, $lat, $lon, $url, $name, $attribution, $ref, $note, $license);
 
   $out .= "<span>";
-  $out .= "<br> <a href='" . $https . "://" . $hostname . "/" . $api_version . "/exif/" . $id . "'>" . &t("exif") ."</a>";
+  $out .= "<a href='" . $https . "://" . $hostname . "/" . $api_version . "/exif/" . $id . "'>" . &t("exif") . " " . "</a>";
   $out .= "</span>";
 
   $out .= "<span>";
-  $out .= "<br> <a href='" . $https . "://" . $hostname . "/" . $api_version . "/timeadded/" . $id . "'>" . &t("date added") ."</a>";
+  $out .= "<a href='" . $https . "://" . $hostname . "/" . $api_version . "/timeadded/" . $id . "'>" . &t("date added") . " " . "</a>";
   $out .= "</span>";
 
   $out .= "</div>";
