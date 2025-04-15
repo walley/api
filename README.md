@@ -1,6 +1,10 @@
 # what is this?
 Guidepost api, and things needed to run it.
-Guidepost is spatially aware image database. You can show images on maps and more.
+
+Guidepost is Spatially Aware Web Image Database
+
+Our spatially aware web image database allows users to explore and visualize images based on their geographical locations. Each image is tagged with precise location data, enabling it to be displayed on interactive maps. This feature facilitates easy navigation and discovery of images by zooming into specific areas, viewing clusters of images, and tracing visual documentation across different regions. Ideal for researchers, travelers, and enthusiasts, our database merges the visual and spatial realms, offering a unique and intuitive way to engage with geographical imagery.
+
 You need to have mod_perl2 from http://perl.apache.org/ installed.
 API specs and help: http://api.openstreetmap.social/editor-help.html.
 
