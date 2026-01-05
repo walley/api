@@ -23,6 +23,7 @@ What the script checks
 2. GET /count → expects a numeric result
 3. GET /all?output=geojson&limit=1 → expects a GeoJSON FeatureCollection (skipped or relaxed if DB empty)
 4. GET /licenseinfo → expects the response to mention "license"
+5. A small set of web pages (`/project/project.html`, `/projectlist/projectlist.html`, `/editor/editor.html`, `/upload.old/dialog.html`) include the upgraded `jquery-3.6.4.min.js` and `jquery-migrate-3.4.1.min.js` bundles (skipped if pages are not served).
 
 Notes
 - These checks are read-only and safe to run against a development server. They may return reduced output or be skipped if an empty DB is installed.

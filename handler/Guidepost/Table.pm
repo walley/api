@@ -1155,7 +1155,8 @@ sub output_html
   my ($query) = @_;
 
   @s = (
-    "https://code.jquery.com/jquery-1.12.4.min.js",
+    "https://code.jquery.com/jquery-3.6.4.min.js",
+    "https://code.jquery.com/jquery-migrate-3.4.1.min.js",
     "https://cdn.jsdelivr.net/jquery.jeditable/1.7.3/jquery.jeditable.js",
     "https://api.".$main_site."/wheelzoom.js",
     "https://code.jquery.com/ui/1.13.3/jquery-ui.min.js",
@@ -2127,7 +2128,7 @@ sub review_form
   $res = $dbh->selectall_arrayref($query);
   $out .= $DBI::errstr;
 
-  my @a = ("https://code.jquery.com/jquery-1.11.3.min.js", "https://api.openstreetmap.social/wheelzoom.js");
+  my @a = ("https://code.jquery.com/jquery-3.6.4.min.js", "https://code.jquery.com/jquery-migrate-3.4.1.min.js", "https://api.openstreetmap.social/wheelzoom.js");
   $out .= &page_header(\@a);
 
   $out .= "<script>";
