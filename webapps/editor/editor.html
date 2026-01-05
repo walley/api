@@ -5,7 +5,8 @@
   <title>openstreetmap.social - guidepost editor</title>
 
 <!--jQuery-->
-<script type="text/javascript" src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
 <link id="ui-theme" rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.10.0/themes/ui-lightness/jquery-ui.css"/>
 
@@ -109,7 +110,12 @@ function load_page(page)
   uri = https + "://" + host + "/" + t + "/get/" + from + "/" + to;
 //  alert(uri);
 
-  $("#new-nav").load(https + "://" + host + "/" + t + "/get/" + from + "/" + to, response);
+  $.get(https + "://" + host + "/" + t + "/get/" + from + "/" + to, function(data) {
+    $("#new-nav").html(data);
+    if (typeof response === "function") {
+      response();
+    }
+  });
   $("#currpage").html("page:" + page);
 
   $('.edit').editable('http://www.example.com/save.php', {

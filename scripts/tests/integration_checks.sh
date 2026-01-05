@@ -23,6 +23,57 @@ fi
 
 echo "Using BASE=$BASE"
 
+WEB_BASE="${WEB_BASE:-http://localhost}"
+
+# Check that key web pages include the upgraded jQuery + migrate
+printf "[5/8] project page includes upgraded jQuery... "
+proj_body=$("${CURL_COMMON[@]}" "${CURL_HDR[@]}" "$WEB_BASE/project/project.html" 2>/dev/null || true)
+if [ -z "$proj_body" ]; then
+  echo "SKIP (no response)";
+else
+  if echo "$proj_body" | grep -q "jquery-3.6.4.min.js" && echo "$proj_body" | grep -q "jquery-migrate-3.4.1.min.js"; then
+    echo "OK";
+  else
+    fail "project page missing updated jQuery or migrate";
+  fi
+fi
+
+printf "[6/8] projectlist page includes upgraded jQuery... "
+plist_body=$("${CURL_COMMON[@]}" "${CURL_HDR[@]}" "$WEB_BASE/projectlist/projectlist.html" 2>/dev/null || true)
+if [ -z "$plist_body" ]; then
+  echo "SKIP (no response)";
+else
+  if echo "$plist_body" | grep -q "jquery-3.6.4.min.js" && echo "$plist_body" | grep -q "jquery-migrate-3.4.1.min.js"; then
+    echo "OK";
+  else
+    fail "projectlist page missing updated jQuery or migrate";
+  fi
+fi
+
+printf "[7/8] editor page includes upgraded jQuery... "
+editor_body=$("${CURL_COMMON[@]}" "${CURL_HDR[@]}" "$WEB_BASE/editor/editor.html" 2>/dev/null || true)
+if [ -z "$editor_body" ]; then
+  echo "SKIP (no response)";
+else
+  if echo "$editor_body" | grep -q "jquery-3.6.4.min.js" && echo "$editor_body" | grep -q "jquery-migrate-3.4.1.min.js"; then
+    echo "OK";
+  else
+    fail "editor page missing updated jQuery or migrate";
+  fi
+fi
+
+printf "[8/8] upload.old dialog includes upgraded jQuery... "
+upload_body=$("${CURL_COMMON[@]}" "${CURL_HDR[@]}" "$WEB_BASE/upload.old/dialog.html" 2>/dev/null || true)
+if [ -z "$upload_body" ]; then
+  echo "SKIP (no response)";
+else
+  if echo "$upload_body" | grep -q "jquery-3.6.4.min.js" && echo "$upload_body" | grep -q "jquery-migrate-3.4.1.min.js"; then
+    echo "OK";
+  else
+    fail "upload dialog page missing updated jQuery or migrate";
+  fi
+fi
+
 fail() {
   echo "FAILED: $1"
   exit 1

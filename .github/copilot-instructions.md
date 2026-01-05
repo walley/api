@@ -28,6 +28,8 @@ Goal: Give an AI coding agent the minimal, actionable context to be immediately 
 - Database inspection: use `sqlite3 guidepost "SELECT ..."` to inspect or `sqlite3 guidepost ".schema"` to view schema.
 - Scripts & manual checks: data ingestion scripts are runnable directly (e.g., `scripts/insert/processdir.pl`), they expect files & DB presence and may reference `jhead` and other system tools. A small set of executable curl-based integration checks lives at `scripts/tests/integration_checks.sh`; run them with `BASE=http://localhost/table/1 [HOST_HEADER="api.openstreetmap.social"] chmod +x scripts/tests/integration_checks.sh && ./scripts/tests/integration_checks.sh`.
 
+The tests also check a few web pages expect the upgraded jQuery + jQuery Migrate bundles; you can set `WEB_BASE` if your web UI is served from a different base URL, e.g. `WEB_BASE="http://localhost" ./scripts/tests/integration_checks.sh`.
+
 ## Project-specific conventions
 - Minimal tests: there are no automated unit or integration tests in the repo. When adding behavior, prefer lightweight, verifiable examples and document expected curl commands for manual verification.
 - DB-first logic: many operations are direct SQL against the SQLite files — follow the exact column names (see schema in `README.md`) when writing or fixing SQL.
@@ -53,6 +55,7 @@ Goal: Give an AI coding agent the minimal, actionable context to be immediately 
 ## PR & code style hints
 - Keep changes small and focused; many consumers rely on exact URL shapes and output formats.
 - Add or update manual test instructions (curl commands) when changing endpoints rather than adding heavy test frameworks.
+- When upgrading front-end libraries (e.g., jQuery): include the jQuery Migrate plugin during transition, add smoke tests that fetch key web pages, and search for deprecated APIs (examples: `.load(url, ...)` replaced with `$.get(...).done(...)`, `.size()` → `.length`, `.bind()` → `.on()`). Document any DOM/API changes and add example curl or manual UI checks.
 
 ---
 If anything here is ambiguous or you'd like more details about a specific area (e.g., OAuth flow in `Table.pm`, or how `tags` and `projects` are stored), tell me which part and I will expand or add concrete examples and curl-based tests.
