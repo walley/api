@@ -1,1 +1,145 @@
-map will be added later:)
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="origin">
+  <meta name="color-scheme" content="dark light">
+  <title>Simple Map - OpenLayers &amp; Leaflet</title>
+  <!-- OpenLayers CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+  <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: serif;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .maps-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .map-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .map-title {
+        background-color: #2c3e50;
+        color: white;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    #map-openlayers {
+        width: 100%;
+        height: 500px;
+    }
+
+    #map-leaflet {
+        width: 100%;
+        height: 500px;
+    }
+
+    .map-info {
+        padding: 15px;
+        background-color: #ecf0f1;
+        font-size: 13px;
+        color: #555;
+    }
+
+    @media (max-width: 768px) {
+        .maps-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .leaflet-attribution-flag {
+      display: none !important;
+    }
+
+  </style>
+head>
+ody>
+  <div class="container">
+      <h1>Simple maps to use in your project</h1>
+
+      <div class="maps-grid">
+          <!-- OpenLayers Map -->
+          <div class="map-section">
+              <div class="map-title">OpenLayers Map</div>
+              <div id="map-openlayers"></div>
+              <div class="map-info">
+                  <strong>Library:</strong> OpenLayers<br>
+                  <strong>Layer:</strong> OpenStreetMap (OSM)<br>
+                  <strong>Center:</strong> 0°, 0°<br>
+                  <strong>Zoom:</strong> 2
+              </div>
+          </div>
+
+          <!-- Leaflet Map -->
+          <div class="map-section">
+              <div class="map-title">Leaflet Map</div>
+              <div id="map-leaflet"></div>
+              <div class="map-info">
+                  <strong>Library:</strong> Leaflet<br>
+                  <strong>Layer:</strong> OpenStreetMap (OSM)<br>
+                  <strong>Center:</strong> 0°, 0°<br>
+                  <strong>Zoom:</strong> 2
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- OpenLayers Script -->
+  <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+  <script>
+      // Initialize OpenLayers Map
+      const olMap = new ol.Map({
+          target: 'map-openlayers',
+          layers: [
+              new ol.layer.Tile({
+                  source: new ol.source.OSM()
+              })
+          ],
+          view: new ol.View({
+              center: ol.proj.fromLonLat([0, 0]),
+              zoom: 2
+          })
+      });
+  </script>
+
+  <!-- Leaflet Script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+    // Initialize Leaflet Map
+    const leafletMap = L.map('map-leaflet').setView([0, 0], 2);
+    leafletMap.attributionControl.setPrefix('');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      referrerPolicy: 'origin',
+      maxZoom: 19
+    }).addTo(leafletMap);
+  </script>
+</body>
+</html>
